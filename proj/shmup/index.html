@@ -1,0 +1,38 @@
+<html>
+<head>
+    <title>2D Vertical SHMUP Game</title>
+    <style>
+        #titleScreen, #shipSelectScreen {
+            position: absolute;
+            width: 480px;
+            height: 640px;
+            top: 39%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+        }
+        canvas {
+            display: block;
+            background-color: black;
+            margin: 0 auto;
+        }
+        .shipOption {
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="titleScreen" style="background-image: url('assetsStartScreens/titleScreen.png'); display: block;">
+        <h1 style="font-family: 'Press Start 2P', cursive; font-size: 24px; color: #ff6600; text-shadow: 2px 2px 4px #000;">Click to Start!</h1>
+    </div>
+    
+    <div id="shipSelectScreen">
+        <img src="path/to/ship1.png" id="ship1" class="shipOption">
+        <img src="path/to/ship2.png" id="ship2" class="shipOption">
+    </div>
+    <canvas id="gameCanvas" width="480" height="640"></canvas>
+    <script src="game.js"></script>
+</body>
+</html>
