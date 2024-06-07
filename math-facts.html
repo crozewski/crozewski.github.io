@@ -20,11 +20,11 @@
             cursor: pointer;
             border: none;
             border-radius: 5px;
-            background-color: #4CAF50;
+            background-color: #007BFF;
             color: white;
         }
         button:active {
-            background-color: #45a049;
+            background-color: #0056b3;
         }
         .problem {
             font-size: 24px;
@@ -51,10 +51,6 @@
             font-size: 18px;
             color: #3F51B5;
         }
-        .loading {
-            font-size: 18px;
-            color: #888;
-        }
         @media (max-width: 600px) {
             body {
                 margin: 10px;
@@ -79,7 +75,6 @@
         <button onclick="generateProblem('multiplication')">New Multiplication Problem</button>
         <button onclick="generateProblem('division')">New Division Problem</button>
     </div>
-    <div class="loading" id="loading" style="display: none;">Loading...</div>
     <div class="problem" id="problem"></div>
     <input type="number" id="answer" placeholder="Answer" inputmode="numeric" pattern="[0-9]*">
     <button onclick="checkAnswer()">Check Answer</button>
@@ -103,27 +98,23 @@
         ];
 
         function generateProblem(type) {
-            document.getElementById('loading').style.display = 'block';
             let num1, num2;
-            setTimeout(() => {
-                if (type === 'multiplication') {
-                    num1 = Math.floor(Math.random() * 10) + 1;
-                    num2 = Math.floor(Math.random() * 10) + 1;
-                    correctAnswer = num1 * num2;
-                    document.getElementById('problem').innerText = `${num1} × ${num2} = ?`;
-                } else if (type === 'division') {
-                    do {
-                        num2 = Math.floor(Math.random() * 9) + 1;
-                        correctAnswer = Math.floor(Math.random() * 10) + 1;
-                        num1 = num2 * correctAnswer;
-                    } while (num1 > 10);
-                    document.getElementById('problem').innerText = `${num1} ÷ ${num2} = ?`;
-                }
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('result').innerText = '';
-                document.getElementById('answer').value = '';
-                document.getElementById('answer').focus();
-            }, 500); // Simulate loading delay
+            if (type === 'multiplication') {
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                correctAnswer = num1 * num2;
+                document.getElementById('problem').innerText = `${num1} × ${num2} = ?`;
+            } else if (type === 'division') {
+                do {
+                    num2 = Math.floor(Math.random() * 9) + 1;
+                    correctAnswer = Math.floor(Math.random() * 10) + 1;
+                    num1 = num2 * correctAnswer;
+                } while (num1 > 10);
+                document.getElementById('problem').innerText = `${num1} ÷ ${num2} = ?`;
+            }
+            document.getElementById('result').innerText = '';
+            document.getElementById('answer').value = '';
+            document.getElementById('answer').focus();
         }
 
         function checkAnswer() {
