@@ -14,7 +14,7 @@
             flex-direction: column;
             justify-content: center;
             height: 100vh;
-            box-sizing: border-box;
+            background-color: #f0f0f0;
         }
         h1 {
             color: #4CAF50;
@@ -22,7 +22,7 @@
         }
         button {
             font-size: 16px;
-            padding: 15px 30px;
+            padding: 10px 20px;
             margin: 10px;
             cursor: pointer;
             border: none;
@@ -58,47 +58,18 @@
             font-size: 18px;
             color: #3F51B5;
         }
-        .content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        @media (max-height: 600px) {
-            .content {
-                justify-content: flex-start;
-            }
-        }
-        @media (min-height: 601px) {
-            body {
-                justify-content: center;
-            }
-        }
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            button {
-                font-size: 14px;
-                padding: 10px 20px;
-            }
-            .problem, .result, .points, .rewards {
-                font-size: 20px;
-            }
-            input {
-                font-size: 20px;
-                width: 80px;
-            }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
         }
     </style>
 </head>
 <body>
-    <h1>Math Practice</h1>
-    <div class="content">
-        <div>
-            <button onclick="generateProblem('multiplication')">New Multiplication Problem</button>
-            <button onclick="generateProblem('division')">New Division Problem</button>
-        </div>
+    <div class="container">
+        <h1>Math Practice</h1>
+        <button onclick="generateProblem('multiplication')">New Multiplication Problem</button>
+        <button onclick="generateProblem('division')">New Division Problem</button>
         <div class="problem" id="problem"></div>
         <input type="number" id="answer" placeholder="Answer" inputmode="numeric" pattern="[0-9]*">
         <button onclick="checkAnswer()">Check Answer</button>
