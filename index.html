@@ -33,12 +33,14 @@
         .columns {
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap; /* Added to allow wrapping */
         }
         .column {
             width: 45%;
             background-color: #f9f9f9;
             padding: 10px;
             border: 1px solid #cccccc;
+            box-sizing: border-box; /* Ensure padding and border are included in width */
         }
         .projects {
             margin-top: 40px;
@@ -51,6 +53,12 @@
             font-size: 14px;
             text-align: center;
         }
+        @media (max-width: 600px) {
+            .column {
+                width: 100%; /* Full width on small screens */
+                margin-bottom: 20px; /* Add spacing between stacked columns */
+            }
+        }
     </style>
 </head>
 <body>
@@ -60,22 +68,22 @@
             <div class="column">
                 <div class="about">
                     <h2>About Me</h2>
-                    <p>Hi, I'm Chris! With a background in banking and data analytics, I enjoy using statistical methods and technology to solve problems. I hold an MBA from William Paterson University and a BA from Montclair State University. I love giving back to the community through volunteering and helping build homes for families.</p>
+                    <p>Hi, I'm Chris! I hold an MBA from William Paterson University and a BA from Montclair State University. I enjoy creating value for people with technology. This site contains projects that I've created. Enjoy!</p>
                 </div>
             </div>
             <div class="column">
                 <div class="projects">
                     <h2>Projects</h2>
                     <div class="project-item">
-                        <h3><a href="math-facts.html">Math Facts Practice App</a></h3>
-                        <p>Helps kids practice multiplication and division.</p>
+                        <h3><a href="math-facts.html">Math Facts</a></h3>
+                        <p>Practice multiplication and division.</p>
                     </div>
                     <!-- Add more projects here as you develop them -->
                 </div>
             </div>
         </div>
         <div class="footer">
-            <p>This project is licensed under the <a href="LICENSE">MIT License</a>.</p>
+            <p>These projects are licensed under the <a href="LICENSE">MIT License</a>.</p>
         </div>
     </div>
 </body>
