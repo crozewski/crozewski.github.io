@@ -15,9 +15,16 @@
         }
         button {
             font-size: 16px;
-            padding: 10px 20px;
+            padding: 15px 30px;
             margin: 10px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        button:active {
+            background-color: #45a049;
         }
         .problem {
             font-size: 24px;
@@ -27,6 +34,10 @@
             font-size: 24px;
             width: 100px;
             text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
         .result {
             font-size: 24px;
@@ -40,6 +51,26 @@
             font-size: 18px;
             color: #3F51B5;
         }
+        .loading {
+            font-size: 18px;
+            color: #888;
+        }
+        @media (max-width: 600px) {
+            body {
+                margin: 10px;
+            }
+            button {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+            .problem, .result, .points, .rewards {
+                font-size: 20px;
+            }
+            input {
+                font-size: 20px;
+                width: 80px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -48,8 +79,9 @@
         <button onclick="generateProblem('multiplication')">New Multiplication Problem</button>
         <button onclick="generateProblem('division')">New Division Problem</button>
     </div>
+    <div class="loading" id="loading" style="display: none;">Loading...</div>
     <div class="problem" id="problem"></div>
-    <input type="number" id="answer" placeholder="Answer">
+    <input type="number" id="answer" placeholder="Answer" inputmode="numeric" pattern="[0-9]*">
     <button onclick="checkAnswer()">Check Answer</button>
     <div class="result" id="result"></div>
     <div class="points">
@@ -71,22 +103,27 @@
         ];
 
         function generateProblem(type) {
+            document.getElementById('loading').style.display = 'block';
             let num1, num2;
-            if (type === 'multiplication') {
-                num1 = Math.floor(Math.random() * 10) + 1;
-                num2 = Math.floor(Math.random() * 10) + 1;
-                correctAnswer = num1 * num2;
-                document.getElementById('problem').innerText = `${num1} × ${num2} = ?`;
-            } else if (type === 'division') {
-                do {
-                    num2 = Math.floor(Math.random() * 9) + 1;
-                    correctAnswer = Math.floor(Math.random() * 10) + 1;
-                    num1 = num2 * correctAnswer;
-                } while (num1 > 10);
-                document.getElementById('problem').innerText = `${num1} ÷ ${num2} = ?`;
-            }
-            document.getElementById('result').innerText = '';
-            document.getElementById('answer').value = '';
+            setTimeout(() => {
+                if (type === 'multiplication') {
+                    num1 = Math.floor(Math.random() * 10) + 1;
+                    num2 = Math.floor(Math.random() * 10) + 1;
+                    correctAnswer = num1 * num2;
+                    document.getElementById('problem').innerText = `${num1} × ${num2} = ?`;
+                } else if (type === 'division') {
+                    do {
+                        num2 = Math.floor(Math.random() * 9) + 1;
+                        correctAnswer = Math.floor(Math.random() * 10) + 1;
+                        num1 = num2 * correctAnswer;
+                    } while (num1 > 10);
+                    document.getElementById('problem').innerText = `${num1} ÷ ${num2} = ?`;
+                }
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').innerText = '';
+                document.getElementById('answer').value = '';
+                document.getElementById('answer').focus();
+            }, 500); // Simulate loading delay
         }
 
         function checkAnswer() {
