@@ -8,7 +8,12 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 20px;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         h1 {
             color: #4CAF50;
@@ -53,7 +58,7 @@
         }
         @media (max-width: 600px) {
             body {
-                margin: 10px;
+                padding: 10px;
             }
             button {
                 font-size: 14px;
@@ -67,23 +72,31 @@
                 width: 80px;
             }
         }
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
     <h1>Math Practice</h1>
-    <div>
-        <button onclick="generateProblem('multiplication')">New Multiplication Problem</button>
-        <button onclick="generateProblem('division')">New Division Problem</button>
+    <div class="content">
+        <div>
+            <button onclick="generateProblem('multiplication')">New Multiplication Problem</button>
+            <button onclick="generateProblem('division')">New Division Problem</button>
+        </div>
+        <div class="problem" id="problem"></div>
+        <input type="number" id="answer" placeholder="Answer" inputmode="numeric" pattern="[0-9]*">
+        <button onclick="checkAnswer()">Check Answer</button>
+        <div class="result" id="result"></div>
+        <div class="points">
+            <p>Multiplication Points: <span id="multiplicationPoints">0</span></p>
+            <p>Division Points: <span id="divisionPoints">0</span></p>
+        </div>
+        <div class="rewards" id="rewards"></div>
     </div>
-    <div class="problem" id="problem"></div>
-    <input type="number" id="answer" placeholder="Answer" inputmode="numeric" pattern="[0-9]*">
-    <button onclick="checkAnswer()">Check Answer</button>
-    <div class="result" id="result"></div>
-    <div class="points">
-        <p>Multiplication Points: <span id="multiplicationPoints">0</span></p>
-        <p>Division Points: <span id="divisionPoints">0</span></p>
-    </div>
-    <div class="rewards" id="rewards"></div>
 
     <script>
         let correctAnswer = 0;
