@@ -43,7 +43,7 @@
 
         const player = {
             x: canvasWidth / 2 - 25,
-            y: canvasHeight - 70,
+            y: canvasHeight - 100,
             width: 50,
             height: 50,
             speed: 5,
@@ -62,7 +62,16 @@
 
         function drawPlayer() {
             ctx.fillStyle = 'blue';
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.width / 2, player.y);
+            ctx.lineTo(player.x, player.y + player.height);
+            ctx.lineTo(player.x + player.width, player.y + player.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw hitbox
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+            ctx.fillRect(player.x + player.width / 2 - 5, player.y + player.height / 2 - 5, 10, 10);
         }
 
         function drawBullets() {
@@ -99,7 +108,17 @@
         function drawEnemies() {
             ctx.fillStyle = 'red';
             enemies.forEach((enemy, index) => {
-                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                ctx.beginPath();
+                ctx.moveTo(enemy.x + enemy.width / 2, enemy.y);
+                ctx.lineTo(enemy.x, enemy.y + enemy.height);
+                ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw hitbox
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.fillRect(enemy.x + enemy.width / 2 - 5, enemy.y + enemy.height / 2 - 5, 10, 10);
+
                 enemy.y += enemySpeed;
 
                 if (enemy.y > canvasHeight) {
