@@ -1,6 +1,7 @@
 # PCIPS - Parental Controls in PowerShell: A PowerShell script to manage parental controls
 
 $logFilePath = "$env:USERPROFILE\PCIPS.log"
+$allowedWebsites = @()
 
 function Write-Log {
     param (
@@ -12,91 +13,66 @@ function Write-Log {
     Write-Output $message
 }
 
-function Block-Internet {
-    Write-Log "Blocking all internet access except allowed websites..."
-    try {
-        # Remove any existing "Block All Internet" rule to prevent duplication
-        Get-NetFirewallRule -DisplayName "Block All Internet" -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction SilentlyContinue
-        
-        # Create a rule to block all outbound traffic
-        New-NetFirewallRule -DisplayName "Block All Internet" -Direction Outbound -Action Block -Profile Any -ErrorAction Stop
-        
-        # Ensure allowed websites are accessible
-        $allowedRules = Get-NetFirewallRule | Where-Object { $_.DisplayName -like "Allow *" }
-        foreach ($rule in $allowedRules) {
-            $ruleName = $rule.DisplayName
-            $remoteAddresses = $rule.RemoteAddress
-            foreach ($address in $remoteAddresses) {
-                New-NetFirewallRule -DisplayName $ruleName -Direction Outbound -Action Allow -RemoteAddress $address -Profile Any -ErrorAction Stop
-            }
-        }
-
-        Write-Log "Successfully blocked all outbound traffic except for allowed websites."
-    } catch {
-        Write-Log "Failed to block internet access. Error: $_"
-    }
-}
-
-function Remove-BlockAllInternetRule {
-    Write-Log "Removing the 'Block All Internet' rule to restore internet access..."
-    try {
-        Get-NetFirewallRule -DisplayName "Block All Internet" | Remove-NetFirewallRule -ErrorAction Stop
-        Write-Log "Successfully removed the 'Block All Internet' rule."
-    } catch {
-        Write-Log "Failed to remove the 'Block All Internet' rule. Error: $_"
-    }
-}
-
-function Add-AllowedWebsite {
+# Function to add firewall rules for allowed websites
+function Add-AllowRules {
     param (
-        [string]$WebsiteUrl
+        [string[]]$websites
     )
-    Write-Log "Adding allowed website: $WebsiteUrl"
-    try {
-        $websiteHost = [System.Uri]::new($WebsiteUrl).Host
-        $ipAddresses = [System.Net.Dns]::GetHostAddresses($websiteHost) | Where-Object { $_.AddressFamily -eq 'InterNetwork' }
-
-        foreach ($ip in $ipAddresses) {
-            try {
-                New-NetFirewallRule -DisplayName "Allow $WebsiteUrl" -Direction Outbound -Action Allow -RemoteAddress $ip.IPAddressToString -Profile Any -ErrorAction Stop
-                Write-Log "Successfully created a rule to allow traffic to $ip.IPAddressToString."
-            } catch {
-                Write-Log "Failed to create a rule for $ip.IPAddressToString. Error: $_"
+    foreach ($website in $websites) {
+        try {
+            $ips = [System.Net.Dns]::GetHostAddresses($website) | ForEach-Object { $_.IPAddressToString }
+            foreach ($ip in $ips) {
+                New-NetFirewallRule -DisplayName "Allow $website" -Direction Outbound -RemoteAddress $ip -Action Allow -Profile Any -Description "Allow traffic to $website" -ErrorAction Stop
+                Write-Log "Added allow rule for $website ($ip)"
             }
+        } catch {
+            Write-Log "Failed to add allow rule for $website: $_"
         }
-    } catch {
-        Write-Log "Failed to resolve IP addresses for $WebsiteUrl. Error: $_"
     }
 }
 
-function Remove-AllowedWebsite {
-    param (
-        [string]$WebsiteUrl
-    )
-    Write-Log "Removing allowed website: $WebsiteUrl"
+# Function to add a block rule for all other traffic
+function Add-BlockRule {
     try {
-        $websiteHost = [System.Uri]::new($WebsiteUrl).Host
-        Get-NetFirewallRule | Where-Object { $_.DisplayName -like "Allow *$websiteHost*" } | Remove-NetFirewallRule -ErrorAction Stop
-        Write-Log "Successfully removed the rule for $WebsiteUrl."
+        New-NetFirewallRule -DisplayName "Block all outbound traffic" -Direction Outbound -Action Block -Profile Any -Description "Block all outbound traffic except allowed websites" -ErrorAction Stop
+        Write-Log "Added block rule for all outbound traffic"
     } catch {
-        Write-Log "Failed to remove the rule for $WebsiteUrl. Error: $_"
+        Write-Log "Failed to add block rule: $_"
     }
 }
 
-function Get-AllowedWebsites {
+# Function to update the list of allowed websites
+function Update-AllowedWebsites {
+    param (
+        [string[]]$newWebsites
+    )
+    $allowedWebsites += $newWebsites
+    Add-AllowRules -websites $newWebsites
+}
+
+# Function to remove allowed websites from the list and firewall rules
+function Remove-AllowedWebsites {
+    param (
+        [string[]]$websites
+    )
+    foreach ($website in $websites) {
+        try {
+            Get-NetFirewallRule -DisplayName "Allow $website" | Remove-NetFirewallRule -ErrorAction Stop
+            $allowedWebsites = $allowedWebsites | Where-Object { $_ -ne $website }
+            Write-Log "Removed allow rule for $website"
+        } catch {
+            Write-Log "Failed to remove allow rule for $website: $_"
+        }
+    }
+}
+
+# Function to list all allowed websites
+function List-AllowedWebsites {
     Write-Log "Listing all allowed websites:"
-    try {
-        $rules = Get-NetFirewallRule | Where-Object { $_.DisplayName -like "Allow *" }
-        if ($rules) {
-            $rules | Select-Object -Property DisplayName | ForEach-Object { Write-Output $_.DisplayName }
-        } else {
-            Write-Log "No allowed websites found."
-        }
-    } catch {
-        Write-Log "Failed to retrieve allowed websites. Error: $_"
-    }
+    $allowedWebsites | ForEach-Object { Write-Output $_ }
 }
 
+# Function to show active firewall rules
 function Show-ActiveRules {
     Write-Log "Displaying active firewall rules:"
     try {
@@ -106,6 +82,7 @@ function Show-ActiveRules {
     }
 }
 
+# Function to set time-based access
 function Set-TimeBasedAccess {
     param (
         [string]$StartTime,
@@ -119,11 +96,11 @@ function Set-TimeBasedAccess {
         
         # Create a scheduled task to enable the block all internet rule outside the specified times
         $trigger1 = New-ScheduledTaskTrigger -Daily -At $startTime
-        $action1 = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "-Command `"New-NetFirewallRule -DisplayName 'Block All Internet' -Direction Outbound -Action Block -Profile Any`""
+        $action1 = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "-Command `"New-NetFirewallRule -DisplayName 'Block all outbound traffic' -Direction Outbound -Action Block -Profile Any`""
         Register-ScheduledTask -TaskName "EnableBlockAllInternet" -Trigger $trigger1 -Action $action1 -RunLevel Highest
         
         $trigger2 = New-ScheduledTaskTrigger -Daily -At $endTime
-        $action2 = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "-Command `"Get-NetFirewallRule -DisplayName 'Block All Internet' | Remove-NetFirewallRule`""
+        $action2 = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "-Command `"Get-NetFirewallRule -DisplayName 'Block all outbound traffic' | Remove-NetFirewallRule`""
         Register-ScheduledTask -TaskName "DisableBlockAllInternet" -Trigger $trigger2 -Action $action2 -RunLevel Highest
         
         Write-Log "Successfully set time-based access from $StartTime to $EndTime."
@@ -132,6 +109,7 @@ function Set-TimeBasedAccess {
     }
 }
 
+# Function to block an application
 function Block-Application {
     param (
         [string]$ApplicationPath
@@ -145,6 +123,7 @@ function Block-Application {
     }
 }
 
+# Function to unblock an application
 function Unblock-Application {
     param (
         [string]$ApplicationPath
@@ -183,21 +162,28 @@ function Main {
         $choice = Read-Host "Enter your choice (1-10)"
         switch ($choice) {
             1 {
-                Block-Internet
+                Write-Log "Blocking all internet except allowed websites..."
+                Add-BlockRule
             }
             2 {
                 $website = Read-Host "Enter the website URL to allow (e.g., https://example.com)"
-                Add-AllowedWebsite -WebsiteUrl $website
+                Update-AllowedWebsites -newWebsites @($website)
             }
             3 {
                 $website = Read-Host "Enter the website URL to remove (e.g., https://example.com)"
-                Remove-AllowedWebsite -WebsiteUrl $website
+                Remove-AllowedWebsites -websites @($website)
             }
             4 {
-                Get-AllowedWebsites
+                List-AllowedWebsites
             }
             5 {
-                Remove-BlockAllInternetRule
+                Write-Log "Removing the 'Block All Internet' rule to restore internet access..."
+                try {
+                    Get-NetFirewallRule -DisplayName "Block all outbound traffic" | Remove-NetFirewallRule -ErrorAction Stop
+                    Write-Log "Successfully removed the 'Block all outbound traffic' rule."
+                } catch {
+                    Write-Log "Failed to remove the 'Block all outbound traffic' rule. Error: $_"
+                }
             }
             6 {
                 Show-ActiveRules
