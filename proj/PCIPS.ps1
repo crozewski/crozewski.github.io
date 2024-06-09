@@ -12,16 +12,27 @@ function Write-Log {
     Write-Output $message
 }
 
-function Initialize-Firewall {
-    Write-Log "Initializing firewall to block all internet access..."
+function Block-Internet {
+    Write-Log "Blocking all internet access..."
     try {
         # Remove any existing "Block All Internet" rule to prevent duplication
         Get-NetFirewallRule -DisplayName "Block All Internet" -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction SilentlyContinue
         # Create a rule to block all outbound traffic
         New-NetFirewallRule -DisplayName "Block All Internet" -Direction Outbound -Action Block -Profile Any -ErrorAction Stop
-        Write-Log "Successfully created a rule to block all outbound traffic."
+
+        # Ensure allowed websites are accessible
+        $allowedRules = Get-NetFirewallRule | Where-Object { $_.DisplayName -like "Allow *" }
+        foreach ($rule in $allowedRules) {
+            $ruleName = $rule.DisplayName
+            $remoteAddresses = $rule.RemoteAddress
+            foreach ($address in $remoteAddresses) {
+                New-NetFirewallRule -DisplayName $ruleName -Direction Outbound -Action Allow -RemoteAddress $address -Profile Any -ErrorAction Stop
+            }
+        }
+
+        Write-Log "Successfully blocked all outbound traffic except for allowed websites."
     } catch {
-        Write-Log "Failed to create a blocking rule. Error: $_"
+        Write-Log "Failed to block internet access. Error: $_"
     }
 }
 
@@ -152,7 +163,7 @@ function Show-Menu {
     Write-Output "*        PCIPS - Parental Controls  *"
     Write-Output "*            in PowerShell          *"
     Write-Output "*************************************"
-    Write-Output "* 1. Initialize Firewall            *"
+    Write-Output "* 1. Block Internet                 *"
     Write-Output "* 2. Add Allowed Website            *"
     Write-Output "* 3. Remove Allowed Website         *"
     Write-Output "* 4. List Allowed Websites          *"
@@ -171,7 +182,7 @@ function Main {
         $choice = Read-Host "Enter your choice (1-10)"
         switch ($choice) {
             1 {
-                Initialize-Firewall
+                Block-Internet
             }
             2 {
                 $website = Read-Host "Enter the website URL to allow (e.g., https://example.com)"
