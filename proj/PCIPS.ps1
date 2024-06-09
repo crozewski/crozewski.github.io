@@ -1,87 +1,71 @@
-# Script Name: PCIPS-Init.ps1
-# Description: This script interactively prompts for a list of allowed websites and blocks all other internet traffic using Windows Firewall rules.
-# Author: [Your Name]
-# Date: [Date]
-
-# Function to log messages
-function Log-Message {
-    param (
-        [string]$message
-    )
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Write-Output "$timestamp - $message"
+# Function to prompt for websites to block
+function Get-WebsitesToBlock {
+    $websites = @()
+    while ($true) {
+        $website = Read-Host "Enter a website to block (or press Enter to finish)"
+        if ([string]::IsNullOrEmpty($website)) {
+            break
+        }
+        $websites += "*.$website"
+    }
+    return $websites
 }
 
-# Function to create firewall rules
-function Create-FirewallRules {
-    param (
-        [string[]]$allowedURLs
-    )
+# Function to apply parental controls
+function ApplyParentalControls {
+    try {
+        # Define proxy server settings
+        $proxyServer = "127.0.0.1:80"
+        $proxySetting = $proxyServer
 
-    # Clear existing custom firewall rules
-    Get-NetFirewallRule -DisplayName "PCIPS-*" | Remove-NetFirewallRule
+        # Prompt user for websites to block
+        $exceptions = Get-WebsitesToBlock
 
-    # Allow loopback traffic
-    New-NetFirewallRule -DisplayName "PCIPS-Allow-Loopback" -Direction Outbound -Action Allow -LocalAddress "127.0.0.1" -RemoteAddress "127.0.0.1"
-
-    # Allow Windows Update traffic (example IP ranges and domain names for illustration purposes)
-    $windowsUpdateDomains = @(
-        "windowsupdate.microsoft.com",
-        "update.microsoft.com",
-        "download.windowsupdate.com",
-        "update.microsoft.com",
-        "au.windowsupdate.microsoft.com",
-        "bg.v4.download.windowsupdate.com"
-    )
-
-    foreach ($domain in $windowsUpdateDomains) {
-        try {
-            $ipAddresses = [System.Net.Dns]::GetHostAddresses($domain)
-            foreach ($ip in $ipAddresses) {
-                New-NetFirewallRule -DisplayName "PCIPS-Allow-$domain" -Direction Outbound -Action Allow -RemoteAddress $ip.IPAddressToString
-                Log-Message "Allowed Windows Update domain: $domain ($ip)"
-            }
-        } catch {
-            Log-Message "Error: Unable to resolve IP for Windows Update domain: $domain"
+        if ($exceptions.Count -eq 0) {
+            Write-Host "No websites to block were provided. Exiting script."
+            exit
         }
+
+        # Configure proxy settings in the registry
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 1 -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -Value $proxySetting -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -Value ($exceptions -join ";") -ErrorAction Stop
+
+        # Refresh Internet Explorer settings to apply changes
+        $ieSettings = New-Object -ComObject "Shell.Application"
+        $ieSettings.NameSpace("Internet").InvokeVerb("Refresh")
+
+        Write-Host "Parental Controls configured successfully."
+    } catch {
+        Write-Host "An error occurred: $_"
     }
-
-    foreach ($url in $allowedURLs) {
-        try {
-            $ipAddresses = [System.Net.Dns]::GetHostAddresses($url)
-            foreach ($ip in $ipAddresses) {
-                New-NetFirewallRule -DisplayName "PCIPS-Allow-$url" -Direction Outbound -Action Allow -RemoteAddress $ip.IPAddressToString
-                Log-Message "Allowed URL: $url ($ip)"
-            }
-        } catch {
-            Log-Message "Error: Unable to resolve IP for URL: $url"
-        }
-    }
-
-    # Block all other outbound traffic
-    New-NetFirewallRule -DisplayName "PCIPS-Block-All-Others" -Direction Outbound -Action Block -Enabled True -Profile Any
-
-    Log-Message "Firewall rules created successfully."
 }
 
-# Main script execution
-try {
-    # Prompt for the list of allowed URLs
-    $urlInput = Read-Host -Prompt "Enter a list of allowed websites separated by semicolons (e.g., www.example.com;www.google.com)"
-    $allowedURLs = $urlInput -split ";"
+# Function to revert parental controls
+function RevertParentalControls {
+    try {
+        # Disable proxy settings in the registry
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 0 -ErrorAction Stop
+        Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -ErrorAction Stop
+        Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -ErrorAction Stop
 
-    if ($allowedURLs.Count -eq 0) {
-        Log-Message "Error: No URLs provided."
-        throw "No URLs provided."
+        # Refresh Internet Explorer settings to apply changes
+        $ieSettings = New-Object -ComObject "Shell.Application"
+        $ieSettings.NameSpace("Internet").InvokeVerb("Refresh")
+
+        Write-Host "Parental Controls have been reverted successfully."
+    } catch {
+        Write-Host "An error occurred while reverting settings: $_"
     }
+}
 
-    # Trim any whitespace around URLs
-    $allowedURLs = $allowedURLs | ForEach-Object { $_.Trim() }
+# Main script logic
+$action = Read-Host "Do you want to apply or revert parental controls? (Enter 'apply' or 'revert')"
 
-    # Create firewall rules
-    Create-FirewallRules -allowedURLs $allowedURLs
-
-    Log-Message "PCIPS-Init script executed successfully."
-} catch {
-    Log-Message "Script execution failed: $_"
+if ($action -eq "apply") {
+    ApplyParentalControls
+} elseif ($action -eq "revert") {
+    RevertParentalControls
+} else {
+    Write-Host "Invalid action specified. Please enter 'apply' or 'revert'."
 }
