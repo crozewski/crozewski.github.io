@@ -13,13 +13,14 @@ function Write-Log {
 }
 
 function Block-Internet {
-    Write-Log "Blocking all internet access..."
+    Write-Log "Blocking all internet access except allowed websites..."
     try {
         # Remove any existing "Block All Internet" rule to prevent duplication
         Get-NetFirewallRule -DisplayName "Block All Internet" -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction SilentlyContinue
+        
         # Create a rule to block all outbound traffic
         New-NetFirewallRule -DisplayName "Block All Internet" -Direction Outbound -Action Block -Profile Any -ErrorAction Stop
-
+        
         # Ensure allowed websites are accessible
         $allowedRules = Get-NetFirewallRule | Where-Object { $_.DisplayName -like "Allow *" }
         foreach ($rule in $allowedRules) {
