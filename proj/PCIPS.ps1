@@ -46,7 +46,7 @@ function Update-AllowedWebsites {
     param (
         [string[]]$newWebsites
     )
-    $allowedWebsites += $newWebsites
+    $script:allowedWebsites += $newWebsites
     Add-AllowRules -websites $newWebsites
 }
 
@@ -58,7 +58,7 @@ function Remove-AllowedWebsites {
     foreach ($website in $websites) {
         try {
             Get-NetFirewallRule -DisplayName "Allow $website" | Remove-NetFirewallRule -ErrorAction Stop
-            $allowedWebsites = $allowedWebsites | Where-Object { $_ -ne $website }
+            $script:allowedWebsites = $script:allowedWebsites | Where-Object { $_ -ne $website }
             Write-Log "Removed allow rule for $website"
         } catch {
             Write-Log "Failed to remove allow rule for $website: $_"
@@ -69,7 +69,7 @@ function Remove-AllowedWebsites {
 # Function to list all allowed websites
 function List-AllowedWebsites {
     Write-Log "Listing all allowed websites:"
-    $allowedWebsites | ForEach-Object { Write-Output $_ }
+    $script:allowedWebsites | ForEach-Object { Write-Output $_ }
 }
 
 # Function to show active firewall rules
