@@ -1,8 +1,8 @@
-# Function to prompt for websites to block
-function Get-WebsitesToBlock {
+# Function to prompt for websites to allow
+function Get-WebsitesToAllow {
     $websites = @()
     while ($true) {
-        $website = Read-Host "Enter a website to block (or press Enter to finish)"
+        $website = Read-Host "Enter a website to allow (or press Enter to finish)"
         if ([string]::IsNullOrEmpty($website)) {
             break
         }
@@ -18,18 +18,18 @@ function ApplyParentalControls {
         $proxyServer = "127.0.0.1:80"
         $proxySetting = $proxyServer
 
-        # Prompt user for websites to block
-        $exceptions = Get-WebsitesToBlock
+        # Prompt user for websites to allow
+        $exceptions = Get-WebsitesToAllow
 
         if ($exceptions.Count -eq 0) {
-            Write-Host "No websites to block were provided. Exiting script."
+            Write-Host "No websites to allow were provided. Exiting script."
             exit
         }
 
         # Configure proxy settings in the registry
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyEnable -Value 1 -ErrorAction Stop
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyServer -Value $proxySetting -ErrorAction Stop
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -Value ($exceptions -join ";") -ErrorAction Stop
+        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name ProxyOverride -Value "<local>;${exceptions -join ';'}" -ErrorAction Stop
 
         # Refresh Internet Explorer settings to apply changes
         $ieSettings = New-Object -ComObject "Shell.Application"
