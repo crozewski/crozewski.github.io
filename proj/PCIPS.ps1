@@ -1,4 +1,4 @@
-# Function to prompt for websites to allow
+# Function to prompt for websites to allow 
 function Get-WebsitesToAllow {
     $websites = @()
     while ($true) {
