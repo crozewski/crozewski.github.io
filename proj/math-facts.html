@@ -101,11 +101,9 @@
                 correctAnswer = num1 * num2;
                 document.getElementById('problem').innerText = `${num1} × ${num2} = ?`;
             } else if (type === 'division') {
-                do {
-                    num2 = Math.floor(Math.random() * 9) + 1;
-                    correctAnswer = Math.floor(Math.random() * 10) + 1;
-                    num1 = num2 * correctAnswer;
-                } while (num1 > 10);
+                num2 = Math.floor(Math.random() * 9) + 2; // Ensure divisor is at least 2
+                correctAnswer = Math.floor(Math.random() * 9) + 2; // Ensure quotient is at least 2
+                num1 = num2 * correctAnswer;
                 document.getElementById('problem').innerText = `${num1} ÷ ${num2} = ?`;
             }
             document.getElementById('result').innerText = '';
