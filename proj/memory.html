@@ -36,22 +36,40 @@
     background-color: #8BC34A;
     pointer-events: none;
   }
+  #score {
+    margin-top: 20px;
+    font-size: 1.5rem;
+  }
 </style>
 </head>
 <body>
 
 <h1>Memory Matching Game</h1>
 <div id="game"></div>
+<div id="score">Score: 0</div>
 
 <script>
-  const cardsArray = [
-    'A', 'A', 'B', 'B', 'C', 'C', 'D', 'D',
-    'E', 'E', 'F', 'F', 'G', 'G', 'H', 'H'
+  const allEmojis = [
+    '😀', '😂', '😎', '😍', '🤔', '😴', '🤗', '😱', '😃', '😆', '😊', '😋', '😜', '😝', '😢', '😭', '😡', '😠', '🤬', '🤯', '😲', '🤪', '😵', '🤤', '🥴', '🤠', '🥳', '🤡', '🥶', '🥵', '🤧', '😇', '🥰', '🤩', '🤓', '😈', '👻', '💀', '☠️', '👽', '👾', '🤖', '💩', '🎃', '👀', '🧠', '🦷', '🦴', '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '🖕', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦵', '🦶', '👂', '👃', '🧠', '🦷', '🦴', '👀', '👁️', '👅', '👄', '💋'
   ];
 
+  const gameSize = 16;
+  let emojisArray = [];
   let firstCard = null;
   let secondCard = null;
   let lockBoard = false;
+  let score = 0;
+
+  function getRandomEmojis(count) {
+    const shuffled = allEmojis.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  function createEmojisArray() {
+    const selectedEmojis = getRandomEmojis(gameSize / 2);
+    emojisArray = selectedEmojis.concat(selectedEmojis);
+    shuffle(emojisArray);
+  }
 
   function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -62,11 +80,12 @@
 
   function createBoard() {
     const game = document.getElementById('game');
-    shuffle(cardsArray);
-    cardsArray.forEach(cardValue => {
+    game.innerHTML = '';
+    createEmojisArray();
+    emojisArray.forEach(emoji => {
       const card = document.createElement('div');
       card.classList.add('card');
-      card.dataset.value = cardValue;
+      card.dataset.value = emoji;
       card.textContent = '';
       card.addEventListener('click', flipCard);
       game.appendChild(card);
@@ -91,6 +110,7 @@
   function checkForMatch() {
     if (firstCard.dataset.value === secondCard.dataset.value) {
       disableCards();
+      updateScore();
     } else {
       unflipCards();
     }
@@ -113,6 +133,11 @@
 
   function resetBoard() {
     [firstCard, secondCard, lockBoard] = [null, null, false];
+  }
+
+  function updateScore() {
+    score++;
+    document.getElementById('score').textContent = `Score: ${score}`;
   }
 
   createBoard();
