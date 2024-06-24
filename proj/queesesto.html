@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¿Qué es esto?</title>
+    <title>iOS-Compatible Object Recognition Web App</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <style>
@@ -38,16 +38,17 @@
     </style>
 </head>
 <body>
-    <h1>¿Qué es esto?</h1>
+    <h1>iOS-Compatible Object Recognition Web App</h1>
     <div id="status">Loading model...</div>
     <div id="controls">
         <select id="camera-select">
             <option value="">Select Camera</option>
         </select>
         <button id="dark-mode-toggle">Toggle Dark Mode</button>
+        <button id="start-camera">Start Camera</button>
     </div>
     <div id="video-container">
-        <video id="video" width="640" height="480" autoplay></video>
+        <video id="video" width="640" height="480" playsinline autoplay muted></video>
         <canvas id="canvas"></canvas>
     </div>
     <div id="fps">FPS: 0</div>
@@ -62,12 +63,14 @@
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const objectCountDiv = document.getElementById('object-count');
         const fpsDiv = document.getElementById('fps');
+        const startCameraButton = document.getElementById('start-camera');
 
         let model;
         let stream;
         let objectCounts = {};
         let lastFrameTime = 0;
         let frameCount = 0;
+        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
         // Dark mode toggle
         darkModeToggle.addEventListener('click', () => {
@@ -94,9 +97,18 @@
 
                     if (videoDevices.length === 1) {
                         cameraSelect.value = videoDevices[0].deviceId;
-                        startCamera();
+                        if (!isIOS) {
+                            startCamera();
+                        }
                     } else {
                         cameraSelect.addEventListener('change', startCamera);
+                    }
+
+                    if (isIOS) {
+                        startCameraButton.style.display = 'inline-block';
+                        startCameraButton.addEventListener('click', startCamera);
+                    } else {
+                        startCameraButton.style.display = 'none';
                     }
                 })
                 .catch(err => {
@@ -111,13 +123,17 @@
             }
 
             const constraints = {
-                video: { deviceId: cameraSelect.value ? { exact: cameraSelect.value } : undefined }
+                video: { 
+                    deviceId: cameraSelect.value ? { exact: cameraSelect.value } : undefined,
+                    facingMode: 'environment'
+                }
             };
 
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(newStream => {
                     stream = newStream;
                     video.srcObject = stream;
+                    video.play(); // Explicitly call play for iOS
                     video.onloadedmetadata = () => {
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
@@ -140,41 +156,41 @@
                 lastFrameTime = timestamp;
             }
 
-            model.detect(video).then(predictions => {
-                // Clear the canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+            // Check if video is ready
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 // Draw the video frame
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Reset object counts
-                objectCounts = {};
+                model.detect(video).then(predictions => {
+                    // Reset object counts
+                    objectCounts = {};
 
-                // Draw bounding boxes and labels
-                predictions.forEach(prediction => {
-                    const [x, y, width, height] = prediction.bbox;
-                    ctx.strokeStyle = '#00FFFF';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(x, y, width, height);
+                    // Draw bounding boxes and labels
+                    predictions.forEach(prediction => {
+                        const [x, y, width, height] = prediction.bbox;
+                        ctx.strokeStyle = '#00FFFF';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(x, y, width, height);
 
-                    ctx.fillStyle = '#00FFFF';
-                    ctx.font = '16px Arial';
-                    ctx.fillText(`${prediction.class} (${Math.round(prediction.score * 100)}%)`, x, y > 10 ? y - 5 : 10);
+                        ctx.fillStyle = '#00FFFF';
+                        ctx.font = '16px Arial';
+                        ctx.fillText(`${prediction.class} (${Math.round(prediction.score * 100)}%)`, x, y > 10 ? y - 5 : 10);
 
-                    // Update object counts
-                    objectCounts[prediction.class] = (objectCounts[prediction.class] || 0) + 1;
+                        // Update object counts
+                        objectCounts[prediction.class] = (objectCounts[prediction.class] || 0) + 1;
+                    });
+
+                    // Update object count display
+                    let countText = 'Object Counts: ';
+                    for (let [object, count] of Object.entries(objectCounts)) {
+                        countText += `${object}: ${count}, `;
+                    }
+                    objectCountDiv.textContent = countText.slice(0, -2); // Remove last comma and space
                 });
+            }
 
-                // Update object count display
-                let countText = 'Object Counts: ';
-                for (let [object, count] of Object.entries(objectCounts)) {
-                    countText += `${object}: ${count}, `;
-                }
-                objectCountDiv.textContent = countText.slice(0, -2); // Remove last comma and space
-
-                // Call this function again to create a loop
-                requestAnimationFrame(detectObjects);
-            });
+            // Call this function again to create a loop
+            requestAnimationFrame(detectObjects);
         }
     </script>
 </body>
