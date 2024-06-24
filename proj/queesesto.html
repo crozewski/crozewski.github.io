@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile-Responsive Object Recognition Web App</title>
+    <title>Mobile-Responsive Object Recognition Web App (YOLOv5)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -60,7 +61,7 @@
     </style>
 </head>
 <body>
-    <h1>Mobile-Responsive Object Recognition</h1>
+    <h1>Mobile-Responsive Object Recognition (YOLOv5)</h1>
     <div id="status">Loading model...</div>
     <div id="controls">
         <select id="camera-select">
@@ -94,15 +95,22 @@
         let frameCount = 0;
         let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+        // YOLOv5 class names (COCO dataset)
+        const classNames = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'];
+
         darkModeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
         });
 
-        cocoSsd.load().then(loadedModel => {
-            model = loadedModel;
+        // Load YOLOv5 model
+        async function loadModel() {
+            statusDiv.textContent = 'Loading YOLOv5 model...';
+            model = await tf.loadGraphModel('https://cdn.jsdelivr.net/npm/@tensorflow-models/yolov5@1.6.2/dist/web_model/model.json');
             statusDiv.textContent = 'Model loaded. Setting up camera...';
             setupCameras();
-        });
+        }
+
+        loadModel();
 
         function setupCameras() {
             navigator.mediaDevices.enumerateDevices()
@@ -167,7 +175,7 @@
                 });
         }
 
-        function detectObjects(timestamp) {
+        async function detectObjects(timestamp) {
             frameCount++;
             if (timestamp - lastFrameTime >= 1000) {
                 fpsDiv.textContent = `FPS: ${frameCount}`;
@@ -176,30 +184,55 @@
             }
 
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const tfImg = tf.browser.fromPixels(video);
+                const expandedImg = tfImg.expandDims();
+                const resizedImg = tf.image.resizeBilinear(expandedImg, [640, 640]);
+                const normalizedImg = resizedImg.div(255.0);
+
+                const predictions = await model.executeAsync(normalizedImg);
+                const boxes = await predictions[0].array();
+                const scores = await predictions[1].array();
+                const classes = await predictions[2].array();
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                model.detect(video).then(predictions => {
-                    objectCounts = {};
+                objectCounts = {};
 
-                    predictions.forEach(prediction => {
-                        const [x, y, width, height] = prediction.bbox;
-                        ctx.strokeStyle = '#00FFFF';
+                for (let i = 0; i < boxes[0].length; i++) {
+                    if (scores[0][i] > 0.5) {
+                        const [y, x, height, width] = boxes[0][i];
+                        const class_id = classes[0][i];
+
+                        const color = '#' + Math.floor(Math.random()*16777215).toString(16);
+                        ctx.strokeStyle = color;
                         ctx.lineWidth = 2;
-                        ctx.strokeRect(x, y, width, height);
+                        ctx.strokeRect(
+                            x * canvas.width, 
+                            y * canvas.height, 
+                            width * canvas.width, 
+                            height * canvas.height
+                        );
 
-                        ctx.fillStyle = '#00FFFF';
+                        ctx.fillStyle = color;
                         ctx.font = '16px Arial';
-                        ctx.fillText(`${prediction.class} (${Math.round(prediction.score * 100)}%)`, x, y > 10 ? y - 5 : 10);
+                        ctx.fillText(
+                            `${classNames[class_id]} (${Math.round(scores[0][i] * 100)}%)`, 
+                            x * canvas.width, 
+                            y * canvas.height > 10 ? y * canvas.height - 5 : 10
+                        );
 
-                        objectCounts[prediction.class] = (objectCounts[prediction.class] || 0) + 1;
-                    });
-
-                    let countText = 'Object Counts: ';
-                    for (let [object, count] of Object.entries(objectCounts)) {
-                        countText += `${object}: ${count}, `;
+                        objectCounts[classNames[class_id]] = (objectCounts[classNames[class_id]] || 0) + 1;
                     }
-                    objectCountDiv.textContent = countText.slice(0, -2);
-                });
+                }
+
+                let countText = 'Object Counts: ';
+                for (let [object, count] of Object.entries(objectCounts)) {
+                    countText += `${object}: ${count}, `;
+                }
+                objectCountDiv.textContent = countText.slice(0, -2);
+
+                tf.dispose([tfImg, expandedImg, resizedImg, normalizedImg, ...predictions]);
             }
 
             requestAnimationFrame(detectObjects);
