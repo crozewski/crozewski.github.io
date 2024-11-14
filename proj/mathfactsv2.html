@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Facts Practice</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+            text-align: center;
+        }
+
+        .settings {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .problem {
+            font-size: 48px;
+            margin: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input[type="number"] {
+            font-size: 24px;
+            width: 100px;
+            padding: 5px;
+            margin: 10px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px;
+        }
+
+        .stat-box {
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .feedback {
+            font-size: 24px;
+            margin: 10px 0;
+            min-height: 30px;
+        }
+
+        .practice-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .celebration {
+            position: fixed;
+            pointer-events: none;
+            animation: fall 1s linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔢 Math Facts Practice! 🎨</h1>
+    
+    <div class="settings">
+        <h2>Choose Your Practice:</h2>
+        <div class="checkbox-group">
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="addition" checked>
+                <label for="addition">Addition (+)</label>
+            </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="subtraction">
+                <label for="subtraction">Subtraction (-)</label>
+            </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="multiplication">
+                <label for="multiplication">Multiplication (×)</label>
+            </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="division">
+                <label for="division">Division (÷)</label>
+            </div>
+        </div>
+        <div>
+            <label for="maxNumber">Maximum number to use:</label>
+            <input type="number" id="maxNumber" value="10" min="1" max="100">
+        </div>
+        <button onclick="startPractice()">Start Practice!</button>
+    </div>
+
+    <div id="practiceArea" style="display: none;">
+        <div class="practice-container">
+            <div class="problem">
+                <span id="question"></span>
+                <input type="number" id="answer" onkeypress="checkEnter(event)">
+            </div>
+            <button onclick="checkAnswer()">Check Answer</button>
+            <div class="feedback" id="feedback"></div>
+            <div class="stats">
+                <div class="stat-box">
+                    Score: <span id="score">0</span>
+                </div>
+                <div class="stat-box">
+                    Streak: <span id="streak">0</span>
+                </div>
+                <div class="stat-box">
+                    High Streak: <span id="highStreak">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAnswer;
+        let score = 0;
+        let streak = 0;
+        let highStreak = 0;
+        const emojis = ['🌟', '⭐', '🎈', '🎉', '🎊', '🏆'];
+        const encouragements = [
+            "Amazing job!", 
+            "You're on fire!", 
+            "Math superstar!", 
+            "Keep it up!", 
+            "Fantastic work!",
+            "You're crushing it!"
+        ];
+
+        function startPractice() {
+            const operations = [];
+            if (document.getElementById('addition').checked) operations.push('+');
+            if (document.getElementById('subtraction').checked) operations.push('-');
+            if (document.getElementById('multiplication').checked) operations.push('×');
+            if (document.getElementById('division').checked) operations.push('÷');
+            
+            if (operations.length === 0) {
+                alert("Please select at least one type of math fact to practice!");
+                return;
+            }
+
+            document.getElementById('practiceArea').style.display = 'block';
+            generateQuestion(operations);
+        }
+
+        function generateQuestion(operations) {
+            const maxNumber = parseInt(document.getElementById('maxNumber').value);
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            let num1, num2;
+
+            switch(operation) {
+                case '+':
+                    num1 = Math.floor(Math.random() * (maxNumber + 1));
+                    num2 = Math.floor(Math.random() * (maxNumber + 1));
+                    currentAnswer = num1 + num2;
+                    break;
+                case '-':
+                    num1 = Math.floor(Math.random() * (maxNumber + 1));
+                    num2 = Math.floor(Math.random() * (num1 + 1));
+                    currentAnswer = num1 - num2;
+                    break;
+                case '×':
+                    num1 = Math.floor(Math.random() * (maxNumber + 1));
+                    num2 = Math.floor(Math.random() * (maxNumber + 1));
+                    currentAnswer = num1 * num2;
+                    break;
+                case '÷':
+                    num2 = Math.floor(Math.random() * maxNumber) + 1;
+                    num1 = num2 * (Math.floor(Math.random() * maxNumber) + 1);
+                    if (num1 > maxNumber) {
+                        [num1, num2] = [num2, Math.floor(num1 / num2)];
+                    }
+                    currentAnswer = num1 / num2;
+                    break;
+            }
+
+            document.getElementById('question').textContent = `${num1} ${operation} ${num2} = `;
+            document.getElementById('answer').value = '';
+            document.getElementById('answer').focus();
+        }
+
+        function checkEnter(event) {
+            if (event.key === "Enter") {
+                checkAnswer();
+            }
+        }
+
+        function createCelebration() {
+            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            celebration.textContent = emoji;
+            celebration.style.left = Math.random() * 100 + 'vw';
+            celebration.style.fontSize = '2rem';
+            document.body.appendChild(celebration);
+            
+            setTimeout(() => {
+                celebration.remove();
+            }, 1000);
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answer').value);
+            const feedback = document.getElementById('feedback');
+            
+            if (userAnswer === currentAnswer) {
+                score += 10;
+                streak += 1;
+                highStreak = Math.max(highStreak, streak);
+                
+                // Celebration effects
+                const encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+                feedback.textContent = encouragement;
+                feedback.style.color = '#4CAF50';
+                
+                // Create multiple celebrations for streaks
+                const celebrationCount = Math.min(5, Math.floor(streak / 3) + 1);
+                for (let i = 0; i < celebrationCount; i++) {
+                    setTimeout(() => createCelebration(), i * 100);
+                }
+            } else {
+                feedback.textContent = `Not quite! The answer was ${currentAnswer}. Try another!`;
+                feedback.style.color = '#f44336';
+                streak = 0;
+            }
+            
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+            document.getElementById('highStreak').textContent = highStreak;
+            
+            const operations = [];
+            if (document.getElementById('addition').checked) operations.push('+');
+            if (document.getElementById('subtraction').checked) operations.push('-');
+            if (document.getElementById('multiplication').checked) operations.push('×');
+            if (document.getElementById('division').checked) operations.push('÷');
+            
+            generateQuestion(operations);
+        }
+    </script>
+</body>
+</html>
