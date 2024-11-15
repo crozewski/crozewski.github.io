@@ -287,8 +287,10 @@
         // Add event listeners to prevent unwanted zoom only on mobile
         if (isMobileDevice()) {
             document.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                e.target.click();
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    e.target.click();
+                }
             }, { passive: false });
         }
 
@@ -314,6 +316,7 @@
         });
 
         function createCelebration() {
+            const emojis = ['🎉', '🎊', '👏', '✨'];
             const emoji = emojis[Math.floor(Math.random() * emojis.length)];
             const celebration = document.createElement('div');
             celebration.className = 'celebration';
