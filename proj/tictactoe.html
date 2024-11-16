@@ -1,62 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Tic Tac Toe</title>
     <style>
+        :root {
+            --primary-color: #00b4d8;
+            --secondary-color: #023e8a;
+            --accent-color: #48cae4;
+            --background-color: #caf0f8;
+            --cell-size: min(120px, 28vw);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Press Start 2P', cursive, sans-serif;
             text-align: center;
-            background-color: #f0f0f0;
+            background-color: var(--background-color);
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            position: relative;
+            overflow: hidden;
+            image-rendering: pixelated;
         }
+
         h1 {
-            color: #4CAF50;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+            text-shadow: 2px 2px 0 var(--primary-color), 4px 4px 0 var(--accent-color);
         }
+
         .board {
             display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
-            gap: 10px;
-            justify-content: center;
+            grid-template-columns: repeat(3, var(--cell-size));
+            grid-template-rows: repeat(3, var(--cell-size));
+            gap: 8px;
             margin: 20px auto;
+            padding: 10px;
+            border: 4px solid var(--accent-color);
+            background-color: var(--secondary-color);
+            box-shadow: 0 0 15px var(--accent-color);
+            position: relative;
         }
+
         .cell {
-            background-color: #fff;
-            border: 2px solid #4CAF50;
+            background: linear-gradient(145deg, #90e0ef, #48cae4);
+            border: 4px solid var(--primary-color);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2em;
+            font-size: 4em;
             cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+            box-shadow: 4px 4px 0 var(--secondary-color);
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            color: var(--secondary-color);
         }
+
+        .cell:hover {
+            transform: translateY(-5px);
+        }
+
+        .cell:active {
+            transform: translateY(2px);
+        }
+
         .cell.disabled {
-            pointer-events: none;
-            background-color: #e0e0e0;
+            cursor: default;
         }
-        .status {
-            font-size: 1.5em;
-            margin: 20px 0;
+
+        .cell.win {
+            animation: glow 1s infinite alternate;
         }
-        button {
-            font-size: 1em;
+
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color);
+            }
+
+            100% {
+                box-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color);
+            }
+        }
+
+        .score {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0;
+            font-size: 1.2em;
+            text-shadow: 2px 2px 0 var(--secondary-color);
+            color: var(--secondary-color);
+        }
+
+        .score-card {
             padding: 10px 20px;
-            margin: 20px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #007BFF;
-            color: white;
+            background: linear-gradient(145deg, #a0e7e5, #80deea);
+            border: 4px solid var(--accent-color);
+            box-shadow: 0 0 10px var(--primary-color);
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            color: var(--secondary-color);
         }
+
+        button {
+            font-family: 'Press Start 2P', cursive, sans-serif;
+            font-size: 1.2em;
+            padding: 15px 30px;
+            margin: 10px;
+            cursor: pointer;
+            background: var(--primary-color);
+            border: 4px solid var(--secondary-color);
+            color: var(--secondary-color);
+            text-shadow: 1px 1px 0 var(--background-color);
+            box-shadow: 0 0 15px var(--accent-color);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        button:hover {
+            transform: translateY(-5px);
+        }
+
         button:active {
-            background-color: #0056b3;
+            transform: translateY(2px);
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .status {
+                font-size: 1.1em;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
 </head>
+
 <body>
     <h1>Tic Tac Toe</h1>
+    <div class="score">
+        <div class="score-card">PLAYER X: <span id="xScore">0</span></div>
+        <div class="score-card">PLAYER O: <span id="oScore">0</span></div>
+    </div>
     <div class="board" id="board">
         <div class="cell" data-cell></div>
         <div class="cell" data-cell></div>
@@ -69,33 +170,39 @@
         <div class="cell" data-cell></div>
     </div>
     <div class="status" id="status"></div>
-    <button id="restartButton">Restart Game</button>
+    <button id="restartButton">New Game</button>
 
     <script>
         const board = document.getElementById('board');
         const cells = document.querySelectorAll('[data-cell]');
         const statusText = document.getElementById('status');
         const restartButton = document.getElementById('restartButton');
+        const xScoreElement = document.getElementById('xScore');
+        const oScoreElement = document.getElementById('oScore');
+
         let isXNext = true;
         let gameActive = true;
         const X_CLASS = 'X';
         const O_CLASS = 'O';
+        let scores = { X: 0, O: 0 };
+
         const WINNING_COMBINATIONS = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6]
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
         ];
 
         const handleCellClick = (e) => {
             const cell = e.target;
+            if (cell.textContent || !gameActive) return;
+
             const currentClass = isXNext ? X_CLASS : O_CLASS;
             placeMark(cell, currentClass);
+
             if (checkWin(currentClass)) {
+                const winner = isXNext ? 'X' : 'O';
+                scores[winner]++;
+                updateScores();
                 endGame(false, currentClass);
             } else if (isDraw()) {
                 endGame(true);
@@ -115,14 +222,22 @@
         };
 
         const setStatus = () => {
-            statusText.textContent = `Player ${isXNext ? 'X' : 'O'}'s turn`;
+            statusText.textContent = `PLAYER ${isXNext ? 'X' : 'O'}'S TURN`;
         };
 
         const checkWin = (currentClass) => {
             return WINNING_COMBINATIONS.some(combination => {
-                return combination.every(index => {
+                const win = combination.every(index => {
                     return cells[index].textContent === currentClass;
                 });
+
+                if (win) {
+                    combination.forEach(index => {
+                        cells[index].classList.add('win');
+                    });
+                }
+
+                return win;
             });
         };
 
@@ -132,30 +247,39 @@
             });
         };
 
+        const updateScores = () => {
+            xScoreElement.textContent = scores.X;
+            oScoreElement.textContent = scores.O;
+        };
+
         const endGame = (draw, winnerClass) => {
             if (draw) {
-                statusText.textContent = 'Draw!';
+                statusText.textContent = 'DRAW!';
             } else {
-                statusText.textContent = `Player ${winnerClass} Wins!`;
+                statusText.textContent = `PLAYER ${winnerClass} WINS!`;
             }
             gameActive = false;
             cells.forEach(cell => cell.classList.add('disabled'));
         };
 
         const startGame = () => {
-            isXNext = true;
+            isXNext = Math.random() < 0.5;
             gameActive = true;
             cells.forEach(cell => {
                 cell.textContent = '';
-                cell.classList.remove('disabled');
-                cell.addEventListener('click', handleCellClick, { once: true });
+                cell.classList.remove('disabled', 'win');
             });
             setStatus();
+
+            cells.forEach(cell => {
+                cell.removeEventListener('click', handleCellClick);
+                cell.addEventListener('click', handleCellClick);
+            });
         };
 
         restartButton.addEventListener('click', startGame);
-
         startGame();
     </script>
 </body>
+
 </html>

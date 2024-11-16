@@ -67,7 +67,11 @@ var player = {
     width: 60,
     height: 60,
     speed: 5,
-    invincible: false
+    invincible: false,
+    focusSpeed: 2,
+    powerLevel: 1,
+    bombs: 3,
+    grazeCount: 0
 };
 var playerLives = 3;
 var invincibleTime = 2000;
@@ -247,16 +251,18 @@ var leftPressed = false;
 var upPressed = false;
 var downPressed = false;
 var spacePressed = false;
+var focusPressed = false;
+var bombPressed = false;
 
 // Sound effects
 var hitSound = new Audio('assets/hitSound.wav');
+var bombSound = new Audio('assets/bombSound.wav');
 
 // Event listeners for keyboard input
 
-
 document.addEventListener('keydown', function(event) {
-     // Start the background music on the first key press if it's not already playing
-     if (backgroundMusic.paused) {
+    // Start the background music on the first key press if it's not already playing
+    if (backgroundMusic.paused) {
         backgroundMusic.play();
     }
     switch (event.key) {
@@ -265,6 +271,8 @@ document.addEventListener('keydown', function(event) {
         case 'Up': case 'ArrowUp': upPressed = true; break;
         case 'Down': case 'ArrowDown': downPressed = true; break;
         case ' ': case 'Spacebar': spacePressed = true; break;
+        case 'Shift': focusPressed = true; break;
+        case 'b': case 'B': bombPressed = true; break;
     }
 });
 
@@ -275,6 +283,8 @@ document.addEventListener('keyup', function(event) {
         case 'Up': case 'ArrowUp': upPressed = false; break;
         case 'Down': case 'ArrowDown': downPressed = false; break;
         case ' ': case 'Spacebar': spacePressed = false; break;
+        case 'Shift': focusPressed = false; break;
+        case 'b': case 'B': bombPressed = false; break;
     }
 });
 
@@ -286,15 +296,27 @@ function shoot(currentTime) {
     }
 }
 
+// Bomb function
+function useBomb() {
+    if (player.bombs > 0) {
+        player.bombs--;
+        bombSound.play();
+        // Clear all enemies on screen
+        enemies = [];
+    }
+}
+
 // Update game state
 function update(deltaTime) {
     if (spacePressed) shoot(Date.now());
+    if (bombPressed) useBomb();
 
     // Update player position
-    if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
-    if (leftPressed && player.x > 0) player.x -= player.speed;
-    if (upPressed && player.y > 0) player.y -= player.speed;
-    if (downPressed && player.y < canvas.height - player.height) player.y += player.speed;
+    var currentSpeed = focusPressed ? player.focusSpeed : player.speed;
+    if (rightPressed && player.x < canvas.width - player.width) player.x += currentSpeed;
+    if (leftPressed && player.x > 0) player.x -= currentSpeed;
+    if (upPressed && player.y > 0) player.y -= currentSpeed;
+    if (downPressed && player.y < canvas.height - player.height) player.y += currentSpeed;
 
     // Update bullets
     for (let i = bullets.length - 1; i >= 0; i--) {
@@ -351,6 +373,10 @@ function checkCollisions() {
         if (rectIntersect(player, enemies[i])) {
             handlePlayerHit();
             break;
+        } else if (Math.abs(player.x - enemies[i].x) < player.width && Math.abs(player.y - enemies[i].y) < player.height) {
+            // Graze detection (near miss)
+            player.grazeCount++;
+            score += 50; // Reward for grazing
         }
     }
 }
@@ -388,6 +414,12 @@ function draw() {
         ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
     }
 
+    // Draw player hitbox in focus mode
+    if (focusPressed) {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(player.x + player.width / 2 - 2, player.y + player.height / 2 - 2, 4, 4); // Draw a small red box as hitbox
+    }
+
     // Draw bullets with hot pink color and a bright purple outline
     ctx.fillStyle = 'white';
     ctx.strokeStyle = 'hotpink'; // Set the stroke color to bright purple
@@ -417,6 +449,14 @@ function draw() {
     // Draw lives in the top right
     ctx.fillStyle = '#ff6600'; // Orange color for lives
     ctx.fillText("Lives: " + playerLives, canvas.width - 150, 30); // Adjust position as needed
+
+    // Draw bombs in the top right under lives
+    ctx.fillStyle = '#ff6600';
+    ctx.fillText("Bombs: " + player.bombs, canvas.width - 150, 60);
+
+    // Draw graze count in the bottom left
+    ctx.fillStyle = '#ff6600';
+    ctx.fillText("Graze: " + player.grazeCount, 10, canvas.height - 20);
 
     // Reset shadow settings to avoid affecting other elements
     ctx.shadowColor = 'transparent';

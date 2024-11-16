@@ -2,13 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile-Responsive Object Recognition Web App</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Advanced Object Recognition Web App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.15.0/tf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <style>
+        :root {
+            --primary-color: #00FFFF;
+            --background-light: #ffffff;
+            --text-light: #333333;
+            --background-dark: #1a1a1a;
+            --text-dark: #ffffff;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,65 +25,161 @@
             transition: background-color 0.3s, color 0.3s;
             margin: 0;
             box-sizing: border-box;
+            background-color: var(--background-light);
+            color: var(--text-light);
+            min-height: 100vh;
         }
+
         body.dark-mode {
-            background-color: #333;
-            color: #fff;
+            background-color: var(--background-dark);
+            color: var(--text-dark);
         }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
         #video-container {
             position: relative;
             width: 100%;
             max-width: 640px;
             margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         #video {
             width: 100%;
             height: auto;
             display: block;
+            transform: scaleX(-1);
         }
+
         #canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            transform: scaleX(-1);
         }
-        #status, #object-count, #controls, #fps {
-            margin-bottom: 10px;
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode .controls-panel {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        button, select {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        select {
+            background: #2196F3;
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
             width: 100%;
             max-width: 640px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
             text-align: center;
         }
-        button, select {
-            margin: 5px;
-            padding: 5px 10px;
+
+        .dark-mode .stat-box {
+            background: rgba(0, 0, 0, 0.8);
         }
+
+        #detection-history {
+            width: 100%;
+            max-width: 640px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+        }
+
+        .dark-mode #detection-history {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
         @media (max-width: 640px) {
             body {
                 padding: 5px;
             }
-            h1 {
-                font-size: 1.5em;
+            
+            button, select {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            .controls-panel {
+                padding: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <h1>Mobile-Responsive Object Recognition</h1>
-    <div id="status">Loading model...</div>
-    <div id="controls">
-        <select id="camera-select">
-            <option value="">Select Camera</option>
-        </select>
-        <button id="dark-mode-toggle">Toggle Dark Mode</button>
-        <button id="start-camera">Start Camera</button>
+    <div class="container">
+        <h1>Advanced Object Recognition</h1>
+        <div id="status" class="stat-box">Loading model...</div>
+        
+        <div class="controls-panel">
+            <select id="camera-select">
+                <option value="">Select Camera</option>
+            </select>
+            <select id="model-select">
+                <option value="coco-ssd">COCO-SSD (General Objects)</option>
+            </select>
+            <button id="dark-mode-toggle">Toggle Dark Mode</button>
+            <button id="start-camera">Start Camera</button>
+            <button id="snapshot">Take Snapshot</button>
+            <button id="toggle-mirror">Toggle Mirror Mode</button>
+        </div>
+
+        <div id="video-container">
+            <video id="video" playsinline autoplay muted></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="stats-panel">
+            <div id="fps" class="stat-box">FPS: 0</div>
+            <div id="object-count" class="stat-box">Objects: 0</div>
+            <div id="confidence" class="stat-box">Avg Confidence: 0%</div>
+        </div>
+
+        <div id="detection-history"></div>
     </div>
-    <div id="video-container">
-        <video id="video" playsinline autoplay muted></video>
-        <canvas id="canvas"></canvas>
-    </div>
-    <div id="fps">FPS: 0</div>
-    <div id="object-count"></div>
 
     <script>
         const video = document.getElementById('video');
@@ -86,23 +191,73 @@
         const objectCountDiv = document.getElementById('object-count');
         const fpsDiv = document.getElementById('fps');
         const startCameraButton = document.getElementById('start-camera');
+        const snapshotButton = document.getElementById('snapshot');
+        const toggleMirrorButton = document.getElementById('toggle-mirror');
+        const confidenceDiv = document.getElementById('confidence');
+        const detectionHistory = document.getElementById('detection-history');
 
         let model;
         let stream;
         let objectCounts = {};
         let lastFrameTime = 0;
         let frameCount = 0;
-        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        let isMirrored = true;
+        let detectionLog = [];
+        const maxLogEntries = 50;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        // Performance monitoring
+        const stats = new Stats();
+        stats.showPanel(0);
+        document.body.appendChild(stats.dom);
+
+        // Initialize detection threshold
+        const confidenceThreshold = 0.6; // Only show detections above 60% confidence
 
         darkModeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
         });
 
-        cocoSsd.load().then(loadedModel => {
-            model = loadedModel;
-            statusDiv.textContent = 'Model loaded. Setting up camera...';
-            setupCameras();
+        toggleMirrorButton.addEventListener('click', () => {
+            isMirrored = !isMirrored;
+            video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+            canvas.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
         });
+
+        snapshotButton.addEventListener('click', () => {
+            const snap = document.createElement('canvas');
+            snap.width = video.videoWidth;
+            snap.height = video.videoHeight;
+            const snapCtx = snap.getContext('2d');
+            
+            if (isMirrored) {
+                snapCtx.scale(-1, 1);
+                snapCtx.drawImage(video, -video.videoWidth, 0, video.videoWidth, video.videoHeight);
+            } else {
+                snapCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            }
+
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `detection-${new Date().toISOString()}.png`;
+            link.href = snap.toDataURL();
+            link.click();
+        });
+
+        // Load model with error handling
+        async function loadModel() {
+            try {
+                statusDiv.textContent = 'Loading model...';
+                model = await cocoSsd.load();
+                statusDiv.textContent = 'Model loaded. Setting up camera...';
+                setupCameras();
+            } catch (error) {
+                console.error('Error loading model:', error);
+                statusDiv.textContent = 'Error loading model. Please refresh and try again.';
+            }
+        }
+
+        loadModel();
 
         function setupCameras() {
             navigator.mediaDevices.enumerateDevices()
@@ -120,54 +275,71 @@
                         if (!isIOS) {
                             startCamera();
                         }
-                    } else {
-                        cameraSelect.addEventListener('change', startCamera);
                     }
 
-                    if (isIOS) {
-                        startCameraButton.style.display = 'inline-block';
-                        startCameraButton.addEventListener('click', startCamera);
-                    } else {
-                        startCameraButton.style.display = 'none';
-                    }
+                    startCameraButton.style.display = 'inline-block';
+                    startCameraButton.addEventListener('click', startCamera);
+                    cameraSelect.addEventListener('change', startCamera);
                 })
                 .catch(err => {
                     console.error('Error enumerating devices:', err);
-                    statusDiv.textContent = 'Error setting up cameras. Please refresh and try again.';
+                    statusDiv.textContent = 'Error setting up cameras. Please check permissions.';
                 });
         }
 
-        function startCamera() {
+        async function startCamera() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
 
             const constraints = {
-                video: { 
+                video: {
                     deviceId: cameraSelect.value ? { exact: cameraSelect.value } : undefined,
-                    facingMode: 'environment'
+                    facingMode: cameraSelect.value ? undefined : 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 }
             };
 
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(newStream => {
-                    stream = newStream;
-                    video.srcObject = stream;
-                    video.play();
-                    video.onloadedmetadata = () => {
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        statusDiv.textContent = 'Camera accessed. Detecting objects...';
-                        detectObjects();
-                    };
-                })
-                .catch(err => {
-                    console.error('Error accessing the camera:', err);
-                    statusDiv.textContent = 'Error accessing the camera. Please make sure you have given permission.';
-                });
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                await video.play();
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                statusDiv.textContent = 'Running detection...';
+                requestAnimationFrame(detectObjects);
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                statusDiv.textContent = 'Camera access denied. Please check permissions.';
+            }
         }
 
-        function detectObjects(timestamp) {
+        function updateDetectionHistory(predictions) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = {
+                timestamp,
+                objects: predictions.map(p => `${p.class} (${Math.round(p.score * 100)}%)`)
+            };
+            
+            detectionLog.unshift(entry);
+            if (detectionLog.length > maxLogEntries) {
+                detectionLog.pop();
+            }
+
+            detectionHistory.innerHTML = detectionLog
+                .map(entry => `
+                    <div>
+                        ${entry.timestamp}: ${entry.objects.join(', ')}
+                    </div>
+                `)
+                .join('');
+        }
+
+        async function detectObjects(timestamp) {
+            stats.begin();
+            
             frameCount++;
             if (timestamp - lastFrameTime >= 1000) {
                 fpsDiv.textContent = `FPS: ${frameCount}`;
@@ -176,32 +348,52 @@
             }
 
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                model.detect(video).then(predictions => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                try {
+                    const predictions = await model.detect(video);
+                    const filteredPredictions = predictions.filter(p => p.score >= confidenceThreshold);
+                    
                     objectCounts = {};
+                    let totalConfidence = 0;
 
-                    predictions.forEach(prediction => {
+                    filteredPredictions.forEach(prediction => {
                         const [x, y, width, height] = prediction.bbox;
+                        
+                        // Draw detection box
                         ctx.strokeStyle = '#00FFFF';
                         ctx.lineWidth = 2;
                         ctx.strokeRect(x, y, width, height);
 
-                        ctx.fillStyle = '#00FFFF';
+                        // Draw label background
+                        const label = `${prediction.class} (${Math.round(prediction.score * 100)}%)`;
+                        const labelWidth = ctx.measureText(label).width + 10;
+                        ctx.fillStyle = 'rgba(0, 255, 255, 0.7)';
+                        ctx.fillRect(x, y > 10 ? y - 24 : 10, labelWidth, 20);
+
+                        // Draw label text
+                        ctx.fillStyle = '#000000';
                         ctx.font = '16px Arial';
-                        ctx.fillText(`${prediction.class} (${Math.round(prediction.score * 100)}%)`, x, y > 10 ? y - 5 : 10);
+                        ctx.fillText(label, x + 5, y > 10 ? y - 8 : 26);
 
                         objectCounts[prediction.class] = (objectCounts[prediction.class] || 0) + 1;
+                        totalConfidence += prediction.score;
                     });
 
-                    let countText = 'Object Counts: ';
-                    for (let [object, count] of Object.entries(objectCounts)) {
-                        countText += `${object}: ${count}, `;
-                    }
-                    objectCountDiv.textContent = countText.slice(0, -2);
-                });
+                    // Update statistics
+                    const totalObjects = Object.values(objectCounts).reduce((a, b) => a + b, 0);
+                    objectCountDiv.textContent = `Objects: ${totalObjects}`;
+                    
+                    const avgConfidence = totalObjects > 0 ? (totalConfidence / totalObjects * 100).toFixed(1) : 0;
+                    confidenceDiv.textContent = `Avg Confidence: ${avgConfidence}%`;
+
+                    updateDetectionHistory(filteredPredictions);
+                } catch (error) {
+                    console.error('Detection error:', error);
+                }
             }
 
+            stats.end();
             requestAnimationFrame(detectObjects);
         }
     </script>
