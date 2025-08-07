@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Brisk Checkout</title>
+<style>
+  :root{
+    --bg: #0f1226;
+    --card: rgba(255,255,255,.09);
+    --text: #f7f7fb;
+    --muted: #b7b8d4;
+    --ok: #52e2a7;
+    --warn: #ffba49;
+    --bad: #ff5d73;
+    --accent1: #7c68ff;
+    --accent2: #00d2ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    color:var(--text); background: radial-gradient(1200px 800px at 80% -10%, #1c2060 10%, transparent 70%),
+                        radial-gradient(1000px 600px at -10% 90%, #0b4a6e 0%, transparent 70%), var(--bg);
+    display:flex; align-items:center; justify-content:center; padding:22px;
+  }
+  .app{
+    width:min(980px,100%); display:grid; gap:18px;
+    grid-template-columns: 1fr; grid-auto-rows:min-content;
+  }
+  .hero{
+    background: linear-gradient(135deg, rgba(124,104,255,.18), rgba(0,210,255,.18));
+    border:1px solid rgba(255,255,255,.15); border-radius:18px; padding:20px;
+    display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center;
+    box-shadow: 0 10px 40px rgba(0,0,0,.25), inset 0 0 80px rgba(124,104,255,.08);
+    backdrop-filter: blur(8px);
+  }
+  .title{font-size:clamp(22px,3.5vw,32px); font-weight:800; letter-spacing:.2px}
+  .sub{color:var(--muted); font-weight:500}
+  .today{
+    display:flex; flex-direction:column; align-items:flex-end; gap:6px; text-align:right;
+  }
+  .date{font-size:14px; color:var(--muted)}
+  .status{
+    font-weight:800; font-size:clamp(18px,3vw,24px);
+    padding:6px 12px; border-radius:10px; background:var(--card); border:1px solid rgba(255,255,255,.14)
+  }
+  .card{
+    background:var(--card); border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.2); backdrop-filter: blur(8px);
+  }
+  .cta{
+    display:grid; gap:14px; align-items:center; text-align:center;
+  }
+  .big-btn{
+    width:100%; font-size:clamp(22px,4.5vw,36px); font-weight:900; letter-spacing:.6px;
+    padding:22px 20px; border-radius:16px; border:none; cursor:pointer;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color:white; transition: transform .06s ease, filter .15s ease, opacity .2s ease;
+    box-shadow: 0 10px 24px rgba(0,210,255,.25), 0 8px 18px rgba(124,104,255,.25);
+  }
+  .big-btn:active{ transform: translateY(1px) scale(.998) }
+  .big-btn[disabled]{ opacity:.55; cursor:not-allowed; filter:grayscale(.1) }
+  .counts{display:flex; gap:14px; justify-content:center; flex-wrap:wrap}
+  .pill{
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); padding:10px 14px; border-radius:999px;
+    font-weight:700; color:var(--muted)
+  }
+  .ok{ color:var(--ok) } .warn{ color:var(--warn) } .bad{ color:var(--bad) }
+
+  .grid{ display:grid; grid-template-columns: 1fr; gap:18px }
+  @media (min-width:880px){ .grid{ grid-template-columns: 1.2fr .8fr } }
+
+  .history{ max-height:340px; overflow:auto; border-radius:14px }
+  .row{
+    display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 10px;
+    border-bottom:1px dashed rgba(255,255,255,.12)
+  }
+  .row:last-child{ border-bottom:none }
+  .row .dt{ font-weight:700 }
+  .row .badge{ font-size:12px; padding:4px 8px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16) }
+
+  .admin{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+  }
+  .ghost{
+    background:transparent; color:var(--muted); border:1px dashed rgba(255,255,255,.25);
+    padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:700;
+  }
+  .mini{
+    font-size:12px; color:var(--muted); text-align:center; margin-top:6px;
+  }
+
+  /* Simple confetti */
+  .confetti{ position:fixed; inset:0; pointer-events:none; overflow:hidden }
+  .confetti i{
+    position:absolute; width:10px; height:16px; opacity:0; transform: translateY(-20px) rotate(0deg);
+    animation: confetti 900ms ease-out forwards;
+  }
+  @keyframes confetti{
+    0%{opacity:0; transform: translateY(-20px) rotate(0deg)}
+    10%{opacity:1}
+    100%{opacity:0; transform: translateY(120vh) rotate(540deg)}
+  }
+
+  /* Tiny inline chart (7-day sparkline) */
+  .spark{ width:100%; height:60px; display:block }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="hero">
+      <div>
+        <div class="title">Brisk Checkout</div>
+        <div class="sub">One Brisk per day — clear, simple, and fair ✅</div>
+      </div>
+      <div class="today">
+        <div class="date" id="todayDate">—</div>
+        <div class="status" id="todayStatus">Checking…</div>
+      </div>
+    </div>
+
+    <div class="card cta">
+      <button id="checkoutBtn" class="big-btn">CHECK OUT A BRISK 🥤</button>
+      <div class="counts">
+        <div class="pill" id="todayCountPill">Today: 0 / 1</div>
+        <div class="pill" id="weekCountPill">This week: 0</div>
+        <div class="pill" id="monthCountPill">This month: 0</div>
+        <div class="pill" id="totalCountPill">All-time: 0</div>
+      </div>
+      <canvas id="spark" class="spark" aria-label="7-day history chart"></canvas>
+      <div class="mini">Tip: the button locks after one checkout per calendar day (based on your device’s time).</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="title" style="font-size:20px">History</div>
+          <div class="admin">
+            <button class="ghost" id="undoBtn" title="Parent undo last">Undo Last</button>
+            <button class="ghost" id="exportBtn">Export CSV</button>
+            <button class="ghost" id="clearBtn">Clear All</button>
+          </div>
+        </div>
+        <div class="history" id="historyList" role="list"></div>
+      </div>
+
+      <div class="card">
+        <div class="title" style="font-size:20px">Rules & Notes</div>
+        <ul style="line-height:1.6; color:var(--muted); margin:0; padding-left:18px">
+          <li>Limit: <b>1 Brisk per day</b>.</li>
+          <li>Resets at midnight local time automatically.</li>
+          <li>Everything is stored on this device (localStorage).</li>
+          <li>Parents can undo, export, or clear with the buttons above.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'briskCheckouts_v1'; // array of ISO date strings (YYYY-MM-DD)
+  const el = (id)=>document.getElementById(id);
+  const todayDate = el('todayDate');
+  const todayStatus = el('todayStatus');
+  const checkoutBtn = el('checkoutBtn');
+  const historyList = el('historyList');
+  const undoBtn = el('undoBtn');
+  const clearBtn = el('clearBtn');
+  const exportBtn = el('exportBtn');
+  const spark = el('spark');
+  const confettiLayer = el('confetti');
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [];
+    }catch{ return []; }
+  }
+  function save(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+  function dateKey(d=new Date()){ return d.toISOString().slice(0,10); } // UTC-based ISO
+  // We want "per local calendar day" – compute local YYYY-MM-DD safely:
+  function localDateKey(d=new Date()){
+    const y = d.getFullYear();
+    const m = (d.getMonth()+1).toString().padStart(2,'0');
+    const day = d.getDate().toString().padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function countOnDay(arr, key){ return arr.filter(k => k === key).length; }
+  function weekNumber(d){
+    // ISO week number
+    const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = (tmp.getUTCDay() + 6) % 7;
+    tmp.setUTCDate(tmp.getUTCDate() - dayNum + 3);
+    const firstThursday = new Date(Date.UTC(tmp.getUTCFullYear(),0,4));
+    const diff = tmp - firstThursday;
+    return 1 + Math.round(diff / 604800000);
+  }
+  function startOfWeek(d){
+    const res = new Date(d); const day = res.getDay() || 7; // 1..7 (Mon..Sun w/ Sun=7)
+    res.setHours(0,0,0,0); if(day>1) res.setDate(res.getDate() - (day-1)); // Monday as start
+    return res;
+  }
+  function inSameWeek(a,b){ return weekNumber(a)===weekNumber(b) && a.getFullYear()===b.getFullYear(); }
+  function monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+
+  function setStatus(ok){
+    todayStatus.textContent = ok ? "Ready — you can check out 1 Brisk" : "Limit reached for today";
+    todayStatus.style.color = ok ? 'var(--ok)' : 'var(--warn)';
+    checkoutBtn.disabled = !ok;
+  }
+
+  function render(){
+    const arr = load();
+    const now = new Date();
+    const todayKey = localDateKey(now);
+    todayDate.textContent = now.toLocaleDateString(undefined,{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    const usedToday = countOnDay(arr, todayKey) >= 1;
+    setStatus(!usedToday);
+
+    // Counts
+    const todayCount = Math.min(1, countOnDay(arr, todayKey));
+    el('todayCountPill').innerHTML = `Today: <b>${todayCount}</b> / 1`;
+    const sow = startOfWeek(now);
+    const weekCount = arr.filter(k => {
+      const [y,m,d] = k.split('-').map(Number);
+      const dt = new Date(y,m-1,d,12); // noon to dodge DST weirdness
+      return dt >= sow && dt <= now;
+    }).length;
+    el('weekCountPill').innerHTML = `This week: <b>${weekCount}</b>`;
+    const mk = monthKey(now);
+    const monthCount = arr.filter(k => k.startsWith(mk)).length;
+    el('monthCountPill').innerHTML = `This month: <b>${monthCount}</b>`;
+    el('totalCountPill').innerHTML = `All-time: <b>${arr.length}</b>`;
+
+    renderHistory(arr);
+    renderSpark(arr);
+  }
+
+  function renderHistory(arr){
+    if(arr.length === 0){ historyList.innerHTML = `<div class="row"><div class="dt">No checkouts yet.</div><div class="badge">—</div></div>`; return; }
+    // Group by day (dedupe extra entries if they ever appeared)
+    const map = new Map();
+    arr.forEach(k => map.set(k, (map.get(k)||0)+1));
+    const rows = Array.from(map.entries())
+      .sort((a,b)=> new Date(b[0]) - new Date(a[0]))
+      .map(([k,count])=>{
+        const d = new Date(k+'T12:00:00'); // Noon
+        const label = d.toLocaleDateString(undefined,{weekday:'short', year:'numeric', month:'short', day:'numeric'});
+        const badge = count>1 ? `<span class="badge bad">${count} (over limit)</span>` : `<span class="badge ok">1</span>`;
+        return `<div class="row" role="listitem"><div class="dt">${label}</div>${badge}</div>`;
+      }).join('');
+    historyList.innerHTML = rows;
+  }
+
+  function renderSpark(arr){
+    const ctx = spark.getContext('2d');
+    const W = spark.clientWidth, H = spark.clientHeight;
+    spark.width = W; spark.height = H;
+    ctx.clearRect(0,0,W,H);
+
+    // Build last 7 days series
+    const days = [];
+    const today = new Date();
+    for(let i=6;i>=0;i--){
+      const d = new Date(today); d.setDate(today.getDate()-i);
+      days.push({key: localDateKey(d), label: d.toLocaleDateString(undefined,{weekday:'narrow'})});
+    }
+    const vals = days.map(d => Math.min(1, countOnDay(arr, d.key)));
+    // axes baseline
+    ctx.globalAlpha = .45;
+    ctx.beginPath(); ctx.moveTo(0,H-1); ctx.lineTo(W,H-1); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // line
+    const step = W/(vals.length-1 || 1);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    vals.forEach((v,i)=>{
+      const x = i*step;
+      const y = H - v*(H-16) - 8;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    const grd = ctx.createLinearGradient(0,0,W,0);
+    grd.addColorStop(0,"#7c68ff"); grd.addColorStop(1,"#00d2ff");
+    ctx.strokeStyle = grd; ctx.stroke();
+
+    // dots
+    vals.forEach((v,i)=>{
+      const x = i*step; const y = H - v*(H-16) - 8;
+      ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle = v>0 ? '#52e2a7' : 'rgba(255,255,255,.35)'; ctx.fill();
+    });
+
+    // weekday labels
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    days.forEach((d,i)=>{
+      ctx.fillText(d.label, i*step - 3, H-4);
+    });
+  }
+
+  function fireConfetti(){
+    for(let i=0;i<24;i++){
+      const piece = document.createElement('i');
+      piece.style.left = Math.random()*100+'%';
+      piece.style.background = `hsl(${Math.random()*360}, 90%, 60%)`;
+      piece.style.transform = `translateY(-20px) rotate(${Math.random()*90}deg)`;
+      piece.style.animationDelay = (Math.random()*100)+'ms';
+      piece.style.opacity = 0;
+      confettiLayer.appendChild(piece);
+      setTimeout(()=> piece.remove(), 1200);
+    }
+  }
+
+  function checkout(){
+    const arr = load();
+    const key = localDateKey(new Date());
+    if(countOnDay(arr, key) >= 1){
+      // Already used
+      alert("Today's Brisk is already checked out. Come back tomorrow! 🌞");
+      return;
+    }
+    arr.push(key);
+    save(arr);
+    fireConfetti();
+    render();
+  }
+
+  checkoutBtn.addEventListener('click', checkout);
+
+  undoBtn.addEventListener('click', ()=>{
+    const arr = load();
+    if(arr.length===0){ alert('Nothing to undo.'); return; }
+    // Prefer undo today first; else last record
+    const today = localDateKey(new Date());
+    const idx = arr.lastIndexOf(today);
+    if(idx>-1) arr.splice(idx,1);
+    else arr.pop();
+    save(arr); render();
+  });
+
+  clearBtn.addEventListener('click', ()=>{
+    if(confirm('Clear ALL history? This cannot be undone.')){ save([]); render(); }
+  });
+
+  exportBtn.addEventListener('click', ()=>{
+    const arr = load();
+    const header = 'date,count\n';
+    // group counts
+    const map = new Map();
+    arr.forEach(k=> map.set(k,(map.get(k)||0)+1));
+    const rows = Array.from(map.entries()).sort((a,b)=> new Date(a[0]) - new Date(b[0]))
+                  .map(([k,c])=> `${k},${c}`).join('\n');
+    const csv = header + rows + '\n';
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'brisk_history.csv'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Update UI on day change (midnight)
+  let lastDay = localDateKey(new Date());
+  setInterval(()=>{
+    const nowKey = localDateKey(new Date());
+    if(nowKey !== lastDay){ lastDay = nowKey; render(); }
+  }, 30 * 1000);
+
+  // Initial render
+  render();
+})();
+</script>
+</body>
+</html>
