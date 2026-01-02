@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bullet Hell SHMUP</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Include Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, player, bullets, enemyBullets, enemies;
+        let playerSpeed = 0.5;
+        let bulletSpeed = 0.5;
+        let enemyBulletSpeed = 0.2;
+        let enemySpeed = 0.05;
+        let keys = {};
+        let waveNumber = 0;
+        let background;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Psychedelic background
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load('https://threejsfundamentals.org/threejs/resources/images/uv-grid.png', function(texture) {
+                background = new THREE.Mesh(
+                    new THREE.PlaneGeometry(window.innerWidth, window.innerHeight),
+                    new THREE.MeshBasicMaterial({ map: texture })
+                );
+                background.position.z = -50;
+                scene.add(background);
+            });
+
+            // Player
+            player = createShip(0x00ff00, 3);
+            player.position.set(0, -10, 0);
+            scene.add(player);
+
+            // Bullets
+            bullets = [];
+
+            // Enemy Bullets
+            enemyBullets = [];
+
+            // Enemies
+            enemies = [];
+            spawnWave();
+
+            camera.position.z = 50;
+
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            document.addEventListener('keypress', onKeyPress);
+        }
+
+        function createShip(color, scale = 1) {
+            const geometry = new THREE.ConeGeometry(0.5 * scale, 2 * scale, 32);
+            const material = new THREE.MeshBasicMaterial({ color: color });
+            const ship = new THREE.Mesh(geometry, material);
+            return ship;
+        }
+
+        function spawnWave() {
+            waveNumber++;
+            let enemyType = waveNumber % 5;
+
+            switch (enemyType) {
+                case 1:
+                    spawnEnemyTypeA();
+                    break;
+                case 2:
+                    spawnEnemyTypeB();
+                    break;
+                case 3:
+                    spawnEnemyTypeC();
+                    break;
+                case 4:
+                    spawnMidBoss();
+                    break;
+                case 0:
+                    spawnFinalBoss();
+                    break;
+            }
+        }
+
+        function spawnEnemyTypeA() {
+            for (let i = -15; i <= 15; i += 5) {
+                const enemy = createShip(0xff0000, 2);
+                enemy.position.set(i, 10, 0);
+                enemy.userData = { type: 'A', pattern: Math.random() * 0.02 };
+                scene.add(enemy);
+                enemies.push(enemy);
+            }
+        }
+
+        function spawnEnemyTypeB() {
+            for (let i = -20; i <= 20; i += 5) {
+                const enemy = createShip(0x0000ff, 2);
+                enemy.position.set(i, 15, 0);
+                enemy.userData = { type: 'B', pattern: Math.random() * 0.04 };
+                scene.add(enemy);
+                enemies.push(enemy);
+            }
+        }
+
+        function spawnEnemyTypeC() {
+            for (let i = -10; i <= 10; i += 5) {
+                const enemy = createShip(0xff00ff, 2);
+                enemy.position.set(i, 20, 0);
+                enemy.userData = { type: 'C', pattern: Math.random() * 0.06 };
+                scene.add(enemy);
+                enemies.push(enemy);
+            }
+        }
+
+        function spawnMidBoss() {
+            const enemy = createShip(0xffff00, 4);
+            enemy.position.set(0, 25, 0);
+            enemy.userData = { type: 'MidBoss', pattern: Math.random() * 0.1 };
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        function spawnFinalBoss() {
+            const enemy = createShip(0xffa500, 5);
+            enemy.position.set(0, 30, 0);
+            enemy.userData = { type: 'FinalBoss', pattern: Math.random() * 0.2 };
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            updatePlayer();
+            updateBullets();
+            updateEnemyBullets();
+            updateEnemies();
+
+            renderer.render(scene, camera);
+        }
+
+        function updatePlayer() {
+            if (keys['ArrowLeft'] && player.position.x > -window.innerWidth / 20) player.position.x -= playerSpeed;
+            if (keys['ArrowRight'] && player.position.x < window.innerWidth / 20) player.position.x += playerSpeed;
+            if (keys['ArrowUp'] && player.position.y < window.innerHeight / 20) player.position.y += playerSpeed;
+            if (keys['ArrowDown'] && player.position.y > -window.innerHeight / 20) player.position.y -= playerSpeed;
+        }
+
+        function updateBullets() {
+            bullets.forEach((bullet, index) => {
+                bullet.position.y += bulletSpeed;
+                if (bullet.position.y > window.innerHeight / 20) {
+                    scene.remove(bullet);
+                    bullets.splice(index, 1);
+                }
+            });
+        }
+
+        function updateEnemyBullets() {
+            enemyBullets.forEach((bullet, index) => {
+                bullet.position.add(bullet.userData.velocity);
+                if (bullet.position.y < -window.innerHeight / 20 || bullet.position.y > window.innerHeight / 20 || bullet.position.x < -window.innerWidth / 20 || bullet.position.x > window.innerWidth / 20) {
+                    scene.remove(bullet);
+                    enemyBullets.splice(index, 1);
+                }
+                if (bullet.position.distanceTo(player.position) < 0.5) {
+                    alert('Game Over!');
+                    resetGame();
+                }
+            });
+        }
+
+        function updateEnemies() {
+            enemies.forEach((enemy, index) => {
+                let pattern = enemy.userData.pattern;
+
+                switch (enemy.userData.type) {
+                    case 'A':
+                        enemy.position.x += Math.sin(enemy.position.y * pattern) * enemySpeed;
+                        enemy.position.y -= enemySpeed;
+                        break;
+                    case 'B':
+                        enemy.position.x += Math.sin(enemy.position.y * pattern) * enemySpeed * 2;
+                        enemy.position.y -= enemySpeed / 2;
+                        break;
+                    case 'C':
+                        enemy.position.x += Math.sin(enemy.position.y * pattern) * enemySpeed * 3;
+                        enemy.position.y -= enemySpeed / 3;
+                        break;
+                    case 'MidBoss':
+                        enemy.position.x += Math.sin(enemy.position.y * pattern) * enemySpeed * 4;
+                        enemy.position.y -= enemySpeed / 4;
+                        break;
+                    case 'FinalBoss':
+                        enemy.position.x += Math.sin(enemy.position.y * pattern) * enemySpeed * 5;
+                        enemy.position.y -= enemySpeed / 5;
+                        break;
+                }
+
+                if (enemy.position.y < -window.innerHeight / 20) {
+                    scene.remove(enemy);
+                    enemies.splice(index, 1);
+                }
+
+                if (Math.random() < 0.05) {
+                    shootEnemyBullet(enemy.position, enemy.userData.type);
+                }
+
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (bullet.position.distanceTo(enemy.position) < 0.5) {
+                        scene.remove(bullet);
+                        scene.remove(enemy);
+                        bullets.splice(bulletIndex, 1);
+                        enemies.splice(index, 1);
+                    }
+                });
+            });
+
+            if (enemies.length === 0) {
+                spawnWave();
+            }
+        }
+
+        function shootBullet() {
+            const bullet = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshBasicMaterial({ color: 0xffff00 })
+            );
+            bullet.position.set(player.position.x, player.position.y + 1, player.position.z);
+            scene.add(bullet);
+            bullets.push(bullet);
+        }
+
+        function shootEnemyBullet(position, type) {
+            const bulletCount = type === 'MidBoss' || type === 'FinalBoss' ? 20 : 5;
+            for (let i = 0; i < bulletCount; i++) {
+                const bullet = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.3, 32, 32),
+                    new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff })
+                );
+                const angle = Math.PI * 2 * (i / bulletCount);
+                bullet.userData = {
+                    velocity: new THREE.Vector3(Math.cos(angle) * enemyBulletSpeed, Math.sin(angle) * enemyBulletSpeed, 0)
+                };
+                bullet.position.set(position.x, position.y, position.z);
+                scene.add(bullet);
+                enemyBullets.push(bullet);
+            }
+        }
+
+        function onKeyDown(event) {
+            keys[event.key] = true;
+        }
+
+        function onKeyUp(event) {
+            keys[event.key] = false;
+        }
+
+        function onKeyPress(event) {
+            if (event.key === ' ') {
+                shootBullet();
+            }
+        }
+
+        function resetGame() {
+            player.position.set(0, -10, 0);
+            bullets.forEach(bullet => scene.remove(bullet));
+            bullets = [];
+            enemyBullets.forEach(bullet => scene.remove(bullet));
+            enemyBullets = [];
+            enemies.forEach(enemy => scene.remove(enemy));
+            enemies = [];
+            waveNumber = 0;
+            spawnWave();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    touch-action: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    position: fixed;
+}
+
+#orientation-prompt {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (orientation: portrait) and (max-width: 768px) {
+    #orientation-prompt {
+        display: flex;
+    }
+    #game-container {
+        display: none;
+    }
+}
+
+.prompt-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.rotate-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    animation: rotate 2s infinite ease-in-out;
+}
+
+@keyframes rotate {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#game-canvas {
+    display: block;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.overlay-content {
+    text-align: center;
+}
+
+.overlay h1 {
+    font-size: 48px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+    letter-spacing: 4px;
+}
+
+.subtitle {
+    font-size: 24px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+#ui-overlay > * {
+    pointer-events: auto;
+}
+
+.screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border: 2px solid #0ff;
+    min-width: 300px;
+    max-width: 90vw;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+.title {
+    font-size: 42px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px #0ff;
+    letter-spacing: 3px;
+}
+
+.screen h2 {
+    font-size: 32px;
+    margin-bottom: 25px;
+    color: #0ff;
+}
+
+.menu-btn {
+    display: block;
+    width: 200px;
+    margin: 15px auto;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-family: inherit;
+    background: #004;
+    color: #0ff;
+    border: 2px solid #0ff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.menu-btn:hover, .menu-btn:active {
+    background: #0ff;
+    color: #000;
+    box-shadow: 0 0 15px #0ff;
+}
+
+.credits {
+    margin-top: 40px;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.small {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.ship-options {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.ship-card {
+    background: rgba(0, 50, 100, 0.3);
+    border: 2px solid #0af;
+    padding: 20px;
+    width: 180px;
+}
+
+.ship-preview {
+    width: 100%;
+    height: 80px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ship-card h3 {
+    font-size: 20px;
+    color: #0ff;
+    margin-bottom: 10px;
+}
+
+.ship-card p {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.ship-desc {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.select-ship-btn {
+    margin-top: 15px;
+    padding: 8px 16px;
+    font-family: inherit;
+    background: #040;
+    color: #0f0;
+    border: 2px solid #0f0;
+    cursor: pointer;
+    width: 100%;
+}
+
+.select-ship-btn:hover, .select-ship-btn:active {
+    background: #0f0;
+    color: #000;
+}
+
+.settings-panel {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+    gap: 15px;
+}
+
+.setting-row label {
+    flex: 1;
+    font-size: 16px;
+}
+
+.setting-row input[type="range"] {
+    flex: 2;
+}
+
+.setting-row input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+}
+
+.value {
+    width: 50px;
+    text-align: right;
+}
+
+.results-panel {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #333;
+    font-size: 16px;
+}
+
+.result-row.bonus {
+    color: #ff0;
+}
+
+.result-row.total {
+    font-size: 20px;
+    font-weight: bold;
+    color: #0ff;
+    border-top: 2px solid #0ff;
+    border-bottom: none;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+#touch-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+}
+
+#touch-controls.hidden {
+    display: none;
+}
+
+#move-zone {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    pointer-events: auto;
+}
+
+.touch-btn {
+    position: absolute;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(0, 255, 255, 0.2);
+    border: 3px solid #0ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #0ff;
+    pointer-events: auto;
+    user-select: none;
+    transition: background 0.1s;
+}
+
+.touch-btn:active {
+    background: rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 20px #0ff;
+}
+
+#fire-btn {
+    bottom: 120px;
+}
+
+#bomb-btn {
+    bottom: 20px;
+    background: rgba(255, 255, 0, 0.2);
+    border-color: #ff0;
+    color: #ff0;
+}
+
+#bomb-btn:active {
+    background: rgba(255, 255, 0, 0.5);
+    box-shadow: 0 0 20px #ff0;
+}
+
+#hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    pointer-events: none;
+    font-size: 14px;
+    z-index: 10;
+}
+
+#hud.hidden {
+    display: none;
+}
+
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.hud-bottom {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.hud-label {
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.hud-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0ff;
+}
+
+.hud-lives, .hud-bombs {
+    display: flex;
+    gap: 5px;
+}
+
+.hud-power {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.hud-chain {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.hud-chain .hud-value {
+    color: #ff0;
+}
+
+#rank-meter {
+    position: absolute;
+    top: 80px;
+    left: 10px;
+    width: 150px;
+}
+
+#rank-meter.hidden {
+    display: none;
+}
+
+.rank-label {
+    font-size: 10px;
+    margin-bottom: 3px;
+}
+
+.rank-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid #fff;
+}
+
+.rank-fill {
+    height: 100%;
+    background: linear-gradient(to right, #0f0, #ff0, #f00);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+#debug-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px;
+    font-size: 12px;
+    border: 1px solid #0ff;
+    pointer-events: none;
+    z-index: 200;
+}
+
+#debug-overlay.hidden {
+    display: none;
+}
+
+#debug-overlay div {
+    margin: 3px 0;
+}
+
+@media (max-width: 768px) {
+    .screen {
+        padding: 20px;
+        font-size: 14px;
+    }
+    
+    .title {
+        font-size: 32px;
+    }
+    
+    .screen h2 {
+        font-size: 24px;
+    }
+    
+    .menu-btn {
+        width: 160px;
+        font-size: 16px;
+        padding: 10px 20px;
+    }
+    
+    .ship-card {
+        width: 150px;
+        padding: 15px;
+    }
+}

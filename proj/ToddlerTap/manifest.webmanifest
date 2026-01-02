@@ -1,0 +1,12 @@
+{
+  "name": "Toddler Tap",
+  "short_name": "Toddler Tap",
+  "start_url": "/proj/ToddlerTap/",
+  "display": "standalone",
+  "background_color": "#fbfbff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

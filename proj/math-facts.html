@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Practice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+        }
+        button:active {
+            background-color: #0056b3;
+        }
+        .problem {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        input {
+            font-size: 24px;
+            width: 100px;
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .result {
+            font-size: 24px;
+            color: #FF5722;
+        }
+        .points {
+            font-size: 20px;
+            margin: 20px 0;
+        }
+        .rewards {
+            font-size: 18px;
+            color: #3F51B5;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Math Practice</h1>
+        <button onclick="generateProblem('multiplication')">New Multiplication Problem</button>
+        <button onclick="generateProblem('division')">New Division Problem</button>
+        <div class="problem" id="problem"></div>
+        <input type="number" id="answer" placeholder="Answer" inputmode="numeric" pattern="[0-9]*">
+        <button onclick="checkAnswer()">Check Answer</button>
+        <div class="result" id="result"></div>
+        <div class="points">
+            <p>Multiplication Points: <span id="multiplicationPoints">0</span></p>
+            <p>Division Points: <span id="divisionPoints">0</span></p>
+        </div>
+        <div class="rewards" id="rewards"></div>
+    </div>
+
+    <script>
+        let correctAnswer = 0;
+        let multiplicationPoints = 0;
+        let divisionPoints = 0;
+        const rewards = [
+            "Keep going!",
+            "Great job!",
+            "You're on fire!",
+            "Math master!",
+            "Superstar!"
+        ];
+
+        function generateProblem(type) {
+            let num1, num2;
+            if (type === 'multiplication') {
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                correctAnswer = num1 * num2;
+                document.getElementById('problem').innerText = `${num1} × ${num2} = ?`;
+            } else if (type === 'division') {
+                num2 = Math.floor(Math.random() * 9) + 2; // Ensure divisor is at least 2
+                correctAnswer = Math.floor(Math.random() * 9) + 2; // Ensure quotient is at least 2
+                num1 = num2 * correctAnswer;
+                document.getElementById('problem').innerText = `${num1} ÷ ${num2} = ?`;
+            }
+            document.getElementById('result').innerText = '';
+            document.getElementById('answer').value = '';
+            document.getElementById('answer').focus();
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answer').value);
+            if (userAnswer === correctAnswer) {
+                document.getElementById('result').innerText = 'Correct!';
+                updatePoints();
+            } else {
+                document.getElementById('result').innerText = 'Try again!';
+            }
+        }
+
+        function updatePoints() {
+            const problemText = document.getElementById('problem').innerText;
+            if (problemText.includes('×')) {
+                multiplicationPoints++;
+                document.getElementById('multiplicationPoints').innerText = multiplicationPoints;
+            } else if (problemText.includes('÷')) {
+                divisionPoints++;
+                document.getElementById('divisionPoints').innerText = divisionPoints;
+            }
+            updateRewards();
+        }
+
+        function updateRewards() {
+            const totalPoints = multiplicationPoints + divisionPoints;
+            let rewardMessage = "";
+            if (totalPoints >= 10) {
+                rewardMessage = rewards[4];
+            } else if (totalPoints >= 7) {
+                rewardMessage = rewards[3];
+            } else if (totalPoints >= 5) {
+                rewardMessage = rewards[2];
+            } else if (totalPoints >= 3) {
+                rewardMessage = rewards[1];
+            } else if (totalPoints >= 1) {
+                rewardMessage = rewards[0];
+            }
+            document.getElementById('rewards').innerText = rewardMessage;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bullet Hell SHMUP</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+            background: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+        }
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameOver" class="game-over">Game Over</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverText = document.getElementById('gameOver');
+
+        const canvasWidth = window.innerWidth;
+        const canvasHeight = window.innerHeight;
+
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
+        const player = {
+            x: canvasWidth / 2 - 25,
+            y: canvasHeight - 70,
+            width: 50,
+            height: 50,
+            speed: 5,
+            bullets: []
+        };
+
+        const enemies = [];
+        const bullets = [];
+        const enemyBullets = [];
+        const playerSpeed = 5;
+        const bulletSpeed = 7;
+        const enemyBulletSpeed = 4;
+        let gameOver = false;
+
+        function drawPlayer() {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = 'yellow';
+            bullets.forEach((bullet, index) => {
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                bullet.y -= bulletSpeed;
+
+                if (bullet.y + bullet.height < 0) {
+                    bullets.splice(index, 1);
+                }
+            });
+        }
+
+        function drawEnemyBullets() {
+            ctx.fillStyle = 'red';
+            enemyBullets.forEach((bullet, index) => {
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                bullet.y += enemyBulletSpeed;
+
+                if (bullet.y > canvasHeight) {
+                    enemyBullets.splice(index, 1);
+                }
+
+                if (
+                    bullet.x < player.x + player.width &&
+                    bullet.x + bullet.width > player.x &&
+                    bullet.y < player.y + player.height &&
+                    bullet.y + bullet.height > player.y
+                ) {
+                    gameOver = true;
+                }
+            });
+        }
+
+        function drawEnemies() {
+            ctx.fillStyle = 'red';
+            enemies.forEach((enemy, index) => {
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                enemy.y += 2;
+
+                if (enemy.y > canvasHeight) {
+                    enemies.splice(index, 1);
+                }
+
+                if (Math.random() < 0.02) {
+                    spawnEnemyBullet(enemy.x + enemy.width / 2, enemy.y + enemy.height);
+                }
+
+                bullets.forEach((bullet, bulletIndex) => {
+                    if (
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y
+                    ) {
+                        enemies.splice(index, 1);
+                        bullets.splice(bulletIndex, 1);
+                    }
+                });
+
+                if (
+                    enemy.x < player.x + player.width &&
+                    enemy.x + enemy.width > player.x &&
+                    enemy.y < player.y + player.height &&
+                    enemy.y + enemy.height > player.y
+                ) {
+                    gameOver = true;
+                }
+            });
+        }
+
+        function spawnEnemyBullet(x, y) {
+            enemyBullets.push({ x: x, y: y, width: 5, height: 10 });
+        }
+
+        function spawnEnemies() {
+            const x = Math.random() * (canvasWidth - 50);
+            enemies.push({ x: x, y: 0, width: 50, height: 50 });
+        }
+
+        function update() {
+            if (gameOver) {
+                gameOverText.style.display = 'block';
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            drawPlayer();
+            drawBullets();
+            drawEnemies();
+            drawEnemyBullets();
+
+            requestAnimationFrame(update);
+        }
+
+        function handleKeyDown(e) {
+            if (gameOver) return;
+
+            if (e.key === 'ArrowLeft' && player.x > 0) {
+                player.x -= playerSpeed;
+            } else if (e.key === 'ArrowRight' && player.x + player.width < canvasWidth) {
+                player.x += playerSpeed;
+            } else if (e.key === 'ArrowUp' && player.y > 0) {
+                player.y -= playerSpeed;
+            } else if (e.key === 'ArrowDown' && player.y + player.height < canvasHeight) {
+                player.y += playerSpeed;
+            } else if (e.key === ' ') {
+                bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10 });
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (gameOver) return;
+
+            const touch = e.touches[0];
+            player.x = touch.clientX - player.width / 2;
+            player.y = touch.clientY - player.height / 2;
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvasWidth) player.x = canvasWidth - player.width;
+            if (player.y < 0) player.y = 0;
+            if (player.y + player.height > canvasHeight) player.y = canvasHeight - player.height;
+        }
+
+        function handleTouchStart(e) {
+            if (gameOver) return;
+
+            bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10 });
+        }
+
+        document.addEventListener('keydown', handleKeyDown);
+        canvas.addEventListener('touchmove', handleTouchMove);
+        canvas.addEventListener('touchstart', handleTouchStart);
+
+        setInterval(spawnEnemies, 1000);
+        requestAnimationFrame(update);
+    </script>
+</body>
+</html>

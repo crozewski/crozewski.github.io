@@ -1,0 +1,123 @@
+{
+  "app": {
+    "kidName": "Milo",
+    "choices": {
+      "easy": 4,
+      "standard": 6,
+      "challenge": 6
+    }
+  },
+  "modes": {
+    "food": {
+      "title": "Food",
+      "items": [
+        {
+          "id": "banana",
+          "display": "🍌",
+          "prompt": ["assets/audio/Emma__food__banana__prompt.m4a"],
+          "label": ["assets/audio/Emma__food__banana__label.m4a"]
+        },
+        {
+          "id": "apple",
+          "display": "🍎",
+          "prompt": ["assets/audio/Emma__food__apple__prompt.m4a"],
+          "label": ["assets/audio/Emma__food__apple__label.m4a"]
+        },
+        {
+          "id": "milk",
+          "display": "🥛",
+          "prompt": ["assets/audio/Abby__food__milk__prompt.m4a"],
+          "label": ["assets/audio/Abby__food__milk__label.m4a"]
+        },
+        {
+          "id": "cracker",
+          "display": "🍘",
+          "prompt": ["assets/audio/Abby__food__cracker__prompt.m4a"],
+          "label": ["assets/audio/Abby__food__cracker__label.m4a"]
+        },
+        {
+          "id": "cheese",
+          "display": "🧀",
+          "prompt": ["assets/audio/Mom__food__cheese__prompt.m4a"],
+          "label": ["assets/audio/Mom__food__cheese__label.m4a"]
+        },
+        {
+          "id": "strawberry",
+          "display": "🍓",
+          "prompt": ["assets/audio/Mom__food__strawberry__prompt.m4a"],
+          "label": ["assets/audio/Mom__food__strawberry__label.m4a"]
+        },
+        {
+          "id": "yogurt",
+          "display": "🥣",
+          "prompt": ["assets/audio/Dad__food__yogurt__prompt.m4a"],
+          "label": ["assets/audio/Dad__food__yogurt__label.m4a"]
+        },
+        {
+          "id": "egg",
+          "display": "🥚",
+          "prompt": ["assets/audio/Dad__food__egg__prompt.m4a"],
+          "label": ["assets/audio/Dad__food__egg__label.m4a"]
+        },
+        {
+          "id": "water",
+          "display": "💧",
+          "prompt": ["assets/audio/Lucas__food__water__prompt.m4a"],
+          "label": ["assets/audio/Lucas__food__water__label.m4a"]
+        },
+        {
+          "id": "bread",
+          "display": "🍞",
+          "prompt": ["assets/audio/Lucas__food__bread__prompt.m4a"],
+          "label": ["assets/audio/Lucas__food__bread__label.m4a"]
+        }
+      ]
+    },
+    "letters": {
+      "title": "Letters",
+      "items": [
+        { "id": "A", "display": "A", "prompt": ["assets/audio/Emma__letters__A__prompt.m4a"], "label": ["assets/audio/Emma__letters__A__label.m4a"] },
+        { "id": "B", "display": "B", "prompt": ["assets/audio/Emma__letters__B__prompt.m4a"], "label": ["assets/audio/Emma__letters__B__label.m4a"] },
+        { "id": "C", "display": "C", "prompt": ["assets/audio/Abby__letters__C__prompt.m4a"], "label": ["assets/audio/Abby__letters__C__label.m4a"] },
+        { "id": "D", "display": "D", "prompt": ["assets/audio/Abby__letters__D__prompt.m4a"], "label": ["assets/audio/Abby__letters__D__label.m4a"] },
+        { "id": "E", "display": "E", "prompt": ["assets/audio/Mom__letters__E__prompt.m4a"], "label": ["assets/audio/Mom__letters__E__label.m4a"] },
+        { "id": "F", "display": "F", "prompt": ["assets/audio/Mom__letters__F__prompt.m4a"], "label": ["assets/audio/Mom__letters__F__label.m4a"] },
+        { "id": "G", "display": "G", "prompt": ["assets/audio/Dad__letters__G__prompt.m4a"], "label": ["assets/audio/Dad__letters__G__label.m4a"] },
+        { "id": "H", "display": "H", "prompt": ["assets/audio/Dad__letters__H__prompt.m4a"], "label": ["assets/audio/Dad__letters__H__label.m4a"] },
+        { "id": "I", "display": "I", "prompt": ["assets/audio/Lucas__letters__I__prompt.m4a"], "label": ["assets/audio/Lucas__letters__I__label.m4a"] },
+        { "id": "J", "display": "J", "prompt": ["assets/audio/Lucas__letters__J__prompt.m4a"], "label": ["assets/audio/Lucas__letters__J__label.m4a"] }
+      ]
+    },
+    "numbers": {
+      "title": "Numbers",
+      "items": [
+        { "id": "1", "display": "1", "prompt": ["assets/audio/Emma__numbers__1__prompt.m4a"], "label": ["assets/audio/Emma__numbers__1__label.m4a"] },
+        { "id": "2", "display": "2", "prompt": ["assets/audio/Emma__numbers__2__prompt.m4a"], "label": ["assets/audio/Emma__numbers__2__label.m4a"] },
+        { "id": "3", "display": "3", "prompt": ["assets/audio/Abby__numbers__3__prompt.m4a"], "label": ["assets/audio/Abby__numbers__3__label.m4a"] },
+        { "id": "4", "display": "4", "prompt": ["assets/audio/Abby__numbers__4__prompt.m4a"], "label": ["assets/audio/Abby__numbers__4__label.m4a"] },
+        { "id": "5", "display": "5", "prompt": ["assets/audio/Mom__numbers__5__prompt.m4a"], "label": ["assets/audio/Mom__numbers__5__label.m4a"] },
+        { "id": "6", "display": "6", "prompt": ["assets/audio/Mom__numbers__6__prompt.m4a"], "label": ["assets/audio/Mom__numbers__6__label.m4a"] },
+        { "id": "7", "display": "7", "prompt": ["assets/audio/Dad__numbers__7__prompt.m4a"], "label": ["assets/audio/Dad__numbers__7__label.m4a"] },
+        { "id": "8", "display": "8", "prompt": ["assets/audio/Dad__numbers__8__prompt.m4a"], "label": ["assets/audio/Dad__numbers__8__label.m4a"] },
+        { "id": "9", "display": "9", "prompt": ["assets/audio/Lucas__numbers__9__prompt.m4a"], "label": ["assets/audio/Lucas__numbers__9__label.m4a"] },
+        { "id": "10", "display": "10", "prompt": ["assets/audio/Lucas__numbers__10__prompt.m4a"], "label": ["assets/audio/Lucas__numbers__10__label.m4a"] }
+      ]
+    }
+  },
+  "feedback": {
+    "correct": [
+      "assets/audio/Emma__feedback__correct__v1.m4a",
+      "assets/audio/Abby__feedback__correct__v1.m4a",
+      "assets/audio/Mom__feedback__correct__v1.m4a",
+      "assets/audio/Dad__feedback__correct__v1.m4a",
+      "assets/audio/Lucas__feedback__correct__v1.m4a"
+    ],
+    "tryagain": [
+      "assets/audio/Emma__feedback__tryagain__v1.m4a",
+      "assets/audio/Abby__feedback__tryagain__v1.m4a",
+      "assets/audio/Mom__feedback__tryagain__v1.m4a",
+      "assets/audio/Dad__feedback__tryagain__v1.m4a",
+      "assets/audio/Lucas__feedback__tryagain__v1.m4a"
+    ]
+  }
+}

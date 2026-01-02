@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>Metro Aegis</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="orientation-prompt">
+        <div class="prompt-content">
+            <div class="rotate-icon">📱↻</div>
+            <p>Please rotate your device to landscape mode</p>
+        </div>
+    </div>
+
+    <div id="tap-to-start" class="overlay">
+        <div class="overlay-content">
+            <h1>METRO AEGIS</h1>
+            <p class="subtitle">Tap to start</p>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="ui-overlay">
+            <div id="title-screen" class="screen">
+                <h1 class="title">METRO AEGIS</h1>
+                <button class="menu-btn" id="start-btn">START</button>
+                <button class="menu-btn" id="settings-btn">SETTINGS</button>
+                <div class="credits">
+                    <p>Original Game</p>
+                    <p class="small">Arrow Keys/Touch to Move</p>
+                    <p class="small">Z/Fire to Shoot • X/Bomb</p>
+                </div>
+            </div>
+
+            <div id="ship-select-screen" class="screen hidden">
+                <h2>SELECT SHIP</h2>
+                <div class="ship-options">
+                    <div class="ship-card" data-ship="striker">
+                        <div class="ship-preview" id="striker-preview"></div>
+                        <h3>STRIKER</h3>
+                        <p>Focused shot</p>
+                        <p class="ship-desc">Power: ★★★★</p>
+                        <p class="ship-desc">Coverage: ★★</p>
+                        <button class="select-ship-btn">SELECT</button>
+                    </div>
+                    <div class="ship-card" data-ship="ranger">
+                        <div class="ship-preview" id="ranger-preview"></div>
+                        <h3>RANGER</h3>
+                        <p>Wide spread</p>
+                        <p class="ship-desc">Power: ★★</p>
+                        <p class="ship-desc">Coverage: ★★★★</p>
+                        <button class="select-ship-btn">SELECT</button>
+                    </div>
+                    <div class="ship-card" data-ship="phantom">
+                        <div class="ship-preview" id="phantom-preview"></div>
+                        <h3>PHANTOM</h3>
+                        <p>Homing missiles</p>
+                        <p class="ship-desc">Power: ★★★</p>
+                        <p class="ship-desc">Coverage: ★★★</p>
+                        <button class="select-ship-btn">SELECT</button>
+                    </div>
+                </div>
+                <button class="menu-btn back-btn">BACK</button>
+            </div>
+
+            <div id="settings-screen" class="screen hidden">
+                <h2>SETTINGS</h2>
+                <div class="settings-panel">
+                    <div class="setting-row">
+                        <label>SFX Volume</label>
+                        <input type="range" id="sfx-volume" min="0" max="100" value="70">
+                        <span class="value" id="sfx-value">70%</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Music Volume</label>
+                        <input type="range" id="music-volume" min="0" max="100" value="50">
+                        <span class="value" id="music-value">50%</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Auto-fire</label>
+                        <input type="checkbox" id="autofire-toggle" checked>
+                    </div>
+                    <div class="setting-row">
+                        <label>Screen Shake</label>
+                        <input type="checkbox" id="shake-toggle" checked>
+                    </div>
+                    <div class="setting-row">
+                        <label>High Contrast</label>
+                        <input type="checkbox" id="contrast-toggle">
+                    </div>
+                </div>
+                <button class="menu-btn back-btn">BACK</button>
+            </div>
+
+            <div id="pause-screen" class="screen hidden">
+                <h2>PAUSED</h2>
+                <button class="menu-btn" id="resume-btn">RESUME</button>
+                <button class="menu-btn" id="pause-settings-btn">SETTINGS</button>
+                <button class="menu-btn" id="quit-btn">QUIT</button>
+            </div>
+
+            <div id="results-screen" class="screen hidden">
+                <h2 id="results-title">STAGE CLEAR</h2>
+                <div class="results-panel">
+                    <div class="result-row">
+                        <span>Score:</span>
+                        <span id="final-score">0</span>
+                    </div>
+                    <div class="result-row">
+                        <span>Max Chain:</span>
+                        <span id="max-chain">0</span>
+                    </div>
+                    <div class="result-row bonus">
+                        <span>No Miss Bonus:</span>
+                        <span id="no-miss-bonus">0</span>
+                    </div>
+                    <div class="result-row bonus">
+                        <span>No Bomb Bonus:</span>
+                        <span id="no-bomb-bonus">0</span>
+                    </div>
+                    <div class="result-row total">
+                        <span>Total:</span>
+                        <span id="total-score">0</span>
+                    </div>
+                </div>
+                <button class="menu-btn" id="continue-btn">CONTINUE</button>
+            </div>
+        </div>
+
+        <div id="touch-controls" class="hidden">
+            <div id="move-zone"></div>
+            <div id="fire-btn" class="touch-btn">FIRE</div>
+            <div id="bomb-btn" class="touch-btn">BOMB</div>
+        </div>
+
+        <div id="hud" class="hidden">
+            <div class="hud-top">
+                <div class="hud-item">
+                    <span class="hud-label">SCORE</span>
+                    <span class="hud-value" id="score-display">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">HI-SCORE</span>
+                    <span class="hud-value" id="hiscore-display">0</span>
+                </div>
+            </div>
+            <div class="hud-bottom">
+                <div class="hud-lives" id="lives-display"></div>
+                <div class="hud-bombs" id="bombs-display"></div>
+                <div class="hud-power">
+                    <span class="hud-label">PWR</span>
+                    <span class="hud-value" id="power-display">1</span>
+                </div>
+                <div class="hud-chain hidden" id="chain-display">
+                    <span class="hud-label">CHAIN</span>
+                    <span class="hud-value" id="chain-value">0</span>
+                </div>
+            </div>
+            <div id="rank-meter" class="hidden">
+                <div class="rank-label">RANK</div>
+                <div class="rank-bar">
+                    <div class="rank-fill" id="rank-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="debug-overlay" class="hidden">
+            <div>FPS: <span id="fps-display">60</span></div>
+            <div>Entities: <span id="entity-count">0</span></div>
+            <div>Rank: <span id="rank-display">0.00</span></div>
+            <div>Chain: <span id="debug-chain">0</span></div>
+        </div>
+    </div>
+
+    <script src="assets.js"></script>
+    <script src="engine.js"></script>
+    <script src="game.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

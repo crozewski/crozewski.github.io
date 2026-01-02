@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Toddler Tap</title>
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">⭐</div>
+        <div>
+          <div class="title">Toddler Tap</div>
+          <div class="subtitle">Pick a game, listen, then tap!</div>
+        </div>
+      </div>
+
+      <!-- Hidden parent menu entry: press-and-hold -->
+      <button id="settingsHold" class="settingsHold" aria-label="Parent settings">
+        ⚙️
+      </button>
+    </header>
+
+    <main class="main">
+      <!-- Home -->
+      <section id="screenHome" class="screen screen--active">
+        <div class="card">
+          <div class="cardTitle">Choose one</div>
+          <div class="modeGrid">
+            <button class="modeBtn" data-mode="food">
+              <div class="modeEmoji">🍎</div>
+              <div class="modeLabel">Food</div>
+            </button>
+            <button class="modeBtn" data-mode="letters">
+              <div class="modeEmoji">🔤</div>
+              <div class="modeLabel">Letters</div>
+            </button>
+            <button class="modeBtn" data-mode="numbers">
+              <div class="modeEmoji">🔢</div>
+              <div class="modeLabel">Numbers</div>
+            </button>
+          </div>
+
+          <div class="hintRow">
+            <div class="hintPill">Tip: Tap the speaker to hear it again</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game -->
+      <section id="screenGame" class="screen">
+        <div class="gameTop">
+          <button id="backBtn" class="backBtn" aria-label="Back">←</button>
+
+          <div class="modeBadge" id="modeBadge">Food</div>
+
+          <button id="replayBtn" class="replayBtn" aria-label="Replay prompt">
+            🔊
+          </button>
+        </div>
+
+        <div class="stars" aria-hidden="true">
+          <span class="star" id="star1">☆</span>
+          <span class="star" id="star2">☆</span>
+          <span class="star" id="star3">☆</span>
+        </div>
+
+        <div id="choices" class="choices" role="group" aria-label="Choices grid"></div>
+
+        <div id="toast" class="toast" aria-live="polite"></div>
+
+        <div id="celebrate" class="celebrate" aria-hidden="true">
+          <div class="burst">🎉</div>
+          <div class="burst">✨</div>
+          <div class="burst">⭐</div>
+        </div>
+      </section>
+
+      <!-- Parent settings modal -->
+      <div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-label="Parent settings">
+        <div class="modalCard">
+          <div class="modalTitle">Parent settings</div>
+
+          <label class="field">
+            <div class="fieldLabel">Difficulty</div>
+            <select id="difficultySelect" class="select">
+              <option value="easy">Easy (4 choices + stronger hints)</option>
+              <option value="standard" selected>Standard (6 choices)</option>
+              <option value="challenge">Challenge (6 choices + fewer hints)</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <div class="fieldLabel">Auto replay prompt after idle</div>
+            <select id="idleReplaySelect" class="select">
+              <option value="off" selected>Off</option>
+              <option value="on">On</option>
+            </select>
+          </label>
+
+          <div class="modalActions">
+            <button id="closeSettingsBtn" class="btn">Done</button>
+          </div>
+
+          <div class="smallNote">
+            To open: press-and-hold the ⚙️ for ~2 seconds.
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footerText">Made for Milo ❤️</div>
+    </footer>
+  </div>
+
+  <script src="./app.js" defer></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+    }
+  </script>
+</body>
+</html>
