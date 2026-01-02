@@ -1,4 +1,3 @@
-// Toddler Tap — artsy UI + quick big celebration
 const $ = (sel) => document.querySelector(sel);
 
 const state = {
@@ -11,17 +10,8 @@ const state = {
   idleTimer: null,
   audio: null,
   audioUnlocked: false,
-  settings: {
-    difficulty: "standard",
-    idleReplay: "off"
-  },
-  fx: {
-    canvas: null,
-    ctx: null,
-    dpr: 1,
-    particles: [],
-    raf: null
-  }
+  settings: { difficulty: "standard", idleReplay: "off" },
+  fx: { canvas: null, ctx: null, dpr: 1, particles: [], raf: null }
 };
 
 function loadSettings() {
@@ -45,7 +35,6 @@ function setScreen(screenId) {
 
 function randInt(n) { return Math.floor(Math.random() * n); }
 function pickOne(arr) { return arr[randInt(arr.length)]; }
-
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -60,71 +49,42 @@ function difficultyChoicesCount() {
   return map[state.settings.difficulty] ?? 6;
 }
 
-function modeTitle(key) {
-  return state.data.modes[key]?.title ?? key;
-}
-
-function modeIcon(key) {
-  if (key === "food") return "🍎";
-  if (key === "letters") return "🔤";
-  if (key === "numbers") return "🔢";
-  return "⭐";
-}
-
 async function fetchData() {
   const res = await fetch("./data/content.json", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load content.json");
   return await res.json();
 }
 
-// iOS: audio must start from a user gesture.
 async function unlockAudio() {
   if (state.audioUnlocked) return true;
-  try {
-    state.audio = new Audio();
-    state.audio.volume = 1.0;
-    return true;
-  } catch {
-    return false;
-  }
+  try { state.audio = new Audio(); state.audio.volume = 1.0; return true; }
+  catch { return false; }
 }
-
 function stopAudio() {
   if (!state.audio) return;
-  try {
-    state.audio.pause();
-    state.audio.currentTime = 0;
-  } catch {}
+  try { state.audio.pause(); state.audio.currentTime = 0; } catch {}
 }
-
 function playAudio(src) {
   return new Promise((resolve) => {
     if (!src) return resolve(false);
     const audio = state.audio || new Audio();
     state.audio = audio;
-
     audio.onended = () => resolve(true);
     audio.onerror = () => resolve(false);
-
     stopAudio();
     audio.src = src;
-
     const p = audio.play();
     if (p && typeof p.then === "function") {
       p.then(() => { state.audioUnlocked = true; }).catch(() => resolve(false));
     }
   });
 }
-
 async function playFromPool(pool) {
   if (!pool || pool.length === 0) return false;
   return await playAudio(pickOne(pool));
 }
 
-function setToast(msg) {
-  $("#toast").textContent = msg || "";
-}
-
+function setToast(msg) { $("#toast").textContent = msg || ""; }
 function setStars(n) {
   state.stars = n;
   $("#star1").textContent = n >= 1 ? "⭐" : "☆";
@@ -132,11 +92,7 @@ function setStars(n) {
   $("#star3").textContent = n >= 3 ? "⭐" : "☆";
 }
 
-function clearIdleTimer() {
-  if (state.idleTimer) clearTimeout(state.idleTimer);
-  state.idleTimer = null;
-}
-
+function clearIdleTimer() { if (state.idleTimer) clearTimeout(state.idleTimer); state.idleTimer = null; }
 function startIdleTimer() {
   clearIdleTimer();
   if (state.settings.idleReplay !== "on") return;
@@ -150,11 +106,9 @@ function getModeItems() {
 function pickTargetAndChoices() {
   const items = getModeItems();
   const count = Math.min(difficultyChoicesCount(), items.length);
-
   const target = pickOne(items);
   const rest = items.filter(x => x.id !== target.id);
   const distractors = shuffle(rest).slice(0, count - 1);
-
   state.target = target;
   state.choices = shuffle([target, ...distractors]);
   state.attempts = 0;
@@ -167,24 +121,30 @@ function disableChoices(disabled) {
 function renderChoices() {
   const box = $("#choices");
   box.innerHTML = "";
-
   const count = difficultyChoicesCount();
   box.style.gridTemplateColumns = count === 4 ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
 
-  state.choices.forEach((item, idx) => {
+  state.choices.forEach((item) => {
     const btn = document.createElement("button");
     btn.className = "choiceBtn";
     btn.type = "button";
     btn.dataset.id = item.id;
 
-    // little artsy random tilt (subtle)
-    const tilts = [-2, -1, 0, 1, 2];
-    btn.style.setProperty("--tilt", `${tilts[(idx + randInt(tilts.length)) % tilts.length]}deg`);
+    if (item.image) {
+      const img = document.createElement("img");
+      img.className = "choiceImg";
+      img.src = item.image;
+      img.alt = item.id;
+      img.loading = "lazy";
+      btn.appendChild(img);
+    } else {
+      const t = document.createElement("div");
+      t.className = "choiceText";
+      t.textContent = item.display ?? item.id;
+      btn.appendChild(t);
+    }
 
-    const main = document.createElement("div");
-    main.textContent = item.display ?? item.id;
-    btn.appendChild(main);
-
+    // tiny parent label (optional)
     const sub = document.createElement("div");
     sub.className = "sub";
     sub.textContent = item.id;
@@ -232,15 +192,12 @@ async function onChoice(item, btnEl) {
   if (correct) {
     btnEl.classList.add("correct");
     setToast("Yay!");
-
-    // BIG, quick celebration burst (still <1s)
     burstCelebrate(btnEl);
 
-    // reinforce label, then praise
     await playFromPool(state.target.label);
     await playFromPool(state.data.feedback.correct);
 
-    state.stars = (state.stars + 1) % 4; // cycles 0-3
+    state.stars = (state.stars + 1) % 4;
     setStars(state.stars);
 
     setTimeout(() => nextRound(), 250);
@@ -250,11 +207,8 @@ async function onChoice(item, btnEl) {
 
     await playFromPool(state.data.feedback.tryagain);
 
-    if (state.attempts === 1) {
-      hintCorrectTile();
-    } else if (state.attempts >= 2 && state.settings.difficulty === "easy") {
-      reduceChoicesForEasy();
-    }
+    if (state.attempts === 1) hintCorrectTile();
+    else if (state.attempts >= 2 && state.settings.difficulty === "easy") reduceChoicesForEasy();
 
     disableChoices(false);
     startIdleTimer();
@@ -271,8 +225,10 @@ function nextRound() {
 
 async function startMode(modeKey) {
   state.modeKey = modeKey;
-  $("#modeBadge").querySelector(".modeChipText").textContent = modeTitle(modeKey);
-  $("#modeChipIcon").textContent = modeIcon(modeKey);
+
+  $("#modeChipText").textContent = state.data.modes[modeKey]?.title ?? modeKey;
+  const icon = state.data.app?.modeIcons?.[modeKey];
+  if (icon) $("#modeChipIconImg").src = icon;
 
   setStars(0);
   setToast("");
@@ -285,7 +241,7 @@ async function startMode(modeKey) {
   disableChoices(false);
 }
 
-/* ---------- Celebration FX (Canvas confetti) ---------- */
+/* --- Celebration FX (canvas confetti + emoji pops) --- */
 
 function initFX() {
   const canvas = $("#fxCanvas");
@@ -298,11 +254,8 @@ function initFX() {
     state.fx.dpr = dpr;
     canvas.width = Math.floor(window.innerWidth * dpr);
     canvas.height = Math.floor(window.innerHeight * dpr);
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   };
-
   window.addEventListener("resize", resize);
   resize();
 }
@@ -312,26 +265,16 @@ function burstCelebrate(fromEl) {
   const x = rect.left + rect.width / 2;
   const y = rect.top + rect.height / 2;
 
-  // Add a handful of larger “emoji confetti” + classic confetti
   const emojis = ["⭐","✨","🎉","💛","🟡","🟠","🟢","🔵"];
   const colors = ["#ff5aa5","#ffd36e","#7ee081","#78c8ff","#b892ff","#ff8b5f"];
 
-  for (let i = 0; i < 26; i++) {
-    state.fx.particles.push(makeConfetti(x, y, colors));
-  }
-  for (let i = 0; i < 10; i++) {
-    state.fx.particles.push(makeEmojiPop(x, y, pickOne(emojis)));
-  }
+  for (let i = 0; i < 28; i++) state.fx.particles.push(makeConfetti(x, y, colors));
+  for (let i = 0; i < 10; i++) state.fx.particles.push(makeEmojiPop(x, y, pickOne(emojis)));
 
-  // run a quick animation loop
   if (!state.fx.raf) {
-    const tick = (t) => {
-      state.fx.raf = requestAnimationFrame(tick);
-      stepFX();
-    };
+    const tick = () => { state.fx.raf = requestAnimationFrame(tick); stepFX(); };
     state.fx.raf = requestAnimationFrame(tick);
 
-    // hard stop quickly so it stays snappy
     setTimeout(() => {
       cancelAnimationFrame(state.fx.raf);
       state.fx.raf = null;
@@ -349,7 +292,6 @@ function makeConfetti(x, y, colors) {
     vx: Math.cos(angle) * speed,
     vy: Math.sin(angle) * speed - (3 + Math.random() * 3),
     g: 0.45 + Math.random() * 0.25,
-    r: 4 + Math.random() * 5,
     w: 6 + Math.random() * 8,
     h: 3 + Math.random() * 6,
     rot: Math.random() * Math.PI,
@@ -359,9 +301,8 @@ function makeConfetti(x, y, colors) {
     color: pickOne(colors)
   };
 }
-
 function makeEmojiPop(x, y, ch) {
-  const angle = (-Math.PI/2) + (Math.random() * Math.PI); // mostly upward
+  const angle = (-Math.PI/2) + (Math.random() * Math.PI);
   const speed = 3 + Math.random() * 6;
   return {
     type: "emoji",
@@ -377,28 +318,22 @@ function makeEmojiPop(x, y, ch) {
     ch
   };
 }
-
 function clearFX() {
   const { ctx } = state.fx;
   if (!ctx) return;
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   state.fx.particles = [];
 }
-
 function stepFX() {
   const { ctx } = state.fx;
   if (!ctx) return;
-
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
   const p = state.fx.particles;
   for (let i = p.length - 1; i >= 0; i--) {
     const a = p[i];
     a.life -= a.decay;
-    if (a.life <= 0) {
-      p.splice(i, 1);
-      continue;
-    }
+    if (a.life <= 0) { p.splice(i, 1); continue; }
 
     a.vy += a.g;
     a.x += a.vx;
@@ -407,15 +342,13 @@ function stepFX() {
 
     ctx.save();
     ctx.globalAlpha = Math.max(0, a.life);
+    ctx.translate(a.x, a.y);
+    ctx.rotate(a.rot);
 
     if (a.type === "confetti") {
-      ctx.translate(a.x, a.y);
-      ctx.rotate(a.rot);
       ctx.fillStyle = a.color;
       ctx.fillRect(-a.w/2, -a.h/2, a.w, a.h);
     } else {
-      ctx.translate(a.x, a.y);
-      ctx.rotate(a.rot);
       ctx.font = `${Math.round(a.s)}px ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -426,25 +359,17 @@ function stepFX() {
   }
 }
 
-/* ---------- UI wiring ---------- */
-
+/* --- UI wiring --- */
 function wireUI() {
-  document.querySelectorAll(".modeCard").forEach(btn => {
+  document.querySelectorAll(".modeRow").forEach(btn => {
     btn.addEventListener("click", async () => {
       await unlockAudio();
       await startMode(btn.dataset.mode);
     });
   });
 
-  $("#replayBtn").addEventListener("click", async () => {
-    await unlockAudio();
-    await replayPrompt();
-  });
-
-  $("#promptBigReplay").addEventListener("click", async () => {
-    await unlockAudio();
-    await replayPrompt();
-  });
+  $("#replayBtn").addEventListener("click", async () => { await unlockAudio(); await replayPrompt(); });
+  $("#promptBigReplay").addEventListener("click", async () => { await unlockAudio(); await replayPrompt(); });
 
   $("#backBtn").addEventListener("click", () => {
     stopAudio();
@@ -461,17 +386,10 @@ function wireUI() {
     $("#idleReplaySelect").value = state.settings.idleReplay;
     $("#settingsModal").classList.add("open");
   };
-
   const closeSettings = () => $("#settingsModal").classList.remove("open");
 
-  const startHold = () => {
-    holdTimer = setTimeout(openSettings, 1600);
-  };
-
-  const cancelHold = () => {
-    if (holdTimer) clearTimeout(holdTimer);
-    holdTimer = null;
-  };
+  const startHold = () => { holdTimer = setTimeout(openSettings, 1600); };
+  const cancelHold = () => { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; };
 
   holdBtn.addEventListener("touchstart", startHold);
   holdBtn.addEventListener("touchend", cancelHold);

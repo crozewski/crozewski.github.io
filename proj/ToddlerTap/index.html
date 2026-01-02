@@ -10,7 +10,6 @@
 </head>
 
 <body>
-  <!-- Big, quick celebration layer -->
   <canvas id="fxCanvas" class="fxCanvas" aria-hidden="true"></canvas>
 
   <div id="app" class="app">
@@ -23,43 +22,50 @@
         </div>
       </div>
 
-      <!-- Hidden parent menu entry: press-and-hold -->
-      <button id="settingsHold" class="iconBtn" aria-label="Parent settings">
-        ⚙️
-      </button>
+      <button id="settingsHold" class="iconBtn" aria-label="Parent settings">⚙️</button>
     </header>
 
     <main class="main">
       <!-- Home -->
       <section id="screenHome" class="screen screen--active">
-        <div class="homeWrap">
-          <div class="homeCard">
+        <div class="homeFull">
+          <div class="homeHeader">
             <div class="homeHeadline">Choose a game</div>
+            <div class="homeSub">Big taps. Quick wins.</div>
+          </div>
 
-            <div class="modeGrid">
-              <button class="modeCard modeCard--food" data-mode="food">
-                <div class="modeIcon">🍎</div>
-                <div class="modeName">Food</div>
-                <div class="modeNote">Find the snack!</div>
-              </button>
+          <div class="modeList">
+            <button class="modeRow modeRow--food" data-mode="food">
+              <img class="modeRowIcon" src="assets/images/ui/mode-food.webp" alt="Food" />
+              <div class="modeRowText">
+                <div class="modeRowName">Food</div>
+                <div class="modeRowNote">Find the snack!</div>
+              </div>
+              <div class="modeRowArrow" aria-hidden="true">→</div>
+            </button>
 
-              <button class="modeCard modeCard--letters" data-mode="letters">
-                <div class="modeIcon">🔤</div>
-                <div class="modeName">Letters</div>
-                <div class="modeNote">Tap the letter!</div>
-              </button>
+            <button class="modeRow modeRow--animals" data-mode="animals">
+              <img class="modeRowIcon" src="assets/images/ui/mode-animals.webp" alt="Animals" />
+              <div class="modeRowText">
+                <div class="modeRowName">Animals</div>
+                <div class="modeRowNote">Find the animal!</div>
+              </div>
+              <div class="modeRowArrow" aria-hidden="true">→</div>
+            </button>
 
-              <button class="modeCard modeCard--numbers" data-mode="numbers">
-                <div class="modeIcon">🔢</div>
-                <div class="modeName">Numbers</div>
-                <div class="modeNote">Find the number!</div>
-              </button>
-            </div>
+            <button class="modeRow modeRow--numbers" data-mode="numbers">
+              <img class="modeRowIcon" src="assets/images/ui/mode-numbers.webp" alt="Numbers" />
+              <div class="modeRowText">
+                <div class="modeRowName">Numbers</div>
+                <div class="modeRowNote">Find the number!</div>
+              </div>
+              <div class="modeRowArrow" aria-hidden="true">→</div>
+            </button>
+          </div>
 
-            <div class="homeTip">
-              <span class="pill">Tip</span>
-              Tap 🔊 to hear it again.
-            </div>
+          <div class="homeTipLine">
+            <span class="pill">Tip</span>
+            Tap 🔊 to hear it again.
           </div>
         </div>
       </section>
@@ -71,8 +77,8 @@
             <button id="backBtn" class="iconBtn iconBtn--big" aria-label="Back">←</button>
 
             <div class="modeChip" id="modeBadge">
-              <span class="modeChipIcon" id="modeChipIcon" aria-hidden="true">🍎</span>
-              <span class="modeChipText">Food</span>
+              <img id="modeChipIconImg" class="modeChipIconImg" src="assets/images/ui/mode-food.webp" alt="" />
+              <span class="modeChipText" id="modeChipText">Food</span>
             </div>
 
             <button id="replayBtn" class="iconBtn iconBtn--big" aria-label="Replay prompt">🔊</button>
@@ -86,13 +92,10 @@
 
           <div class="promptCard">
             <div class="promptLabel">Listen, then tap the match</div>
-            <button id="promptBigReplay" class="promptReplay" type="button">
-              🔊 Replay
-            </button>
+            <button id="promptBigReplay" class="promptReplay" type="button">🔊 Replay</button>
           </div>
 
           <div id="choices" class="choices" role="group" aria-label="Choices grid"></div>
-
           <div id="toast" class="toast" aria-live="polite"></div>
         </div>
 
